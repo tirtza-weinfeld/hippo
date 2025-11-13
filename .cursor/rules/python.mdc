@@ -1,0 +1,160 @@
+---
+alwaysApply: true
+---
+# Python 3.14+ Coding Rules
+
+## Type System - MANDATORY
+
+* ALWAYS use type hints on all function signatures
+* NEVER use `Union`, `Optional`, `List`, `Dict` - use `|`, `list[]`, `dict[]`
+* USE `def func[T](items: list[T]) -> T:` for generics (NOT `TypeVar`)
+* USE `type Point = tuple[float, float]` for type aliases
+* USE `@override` on ALL method overrides
+* USE `TypeIs[T]` for type narrowing (NOT `isinstance` checks when possible)
+* USE `Protocol` for structural typing, NOT abstract base classes
+* USE `Final` for constants that must not be reassigned
+* USE `Never` for exhaustiveness checking in match statements
+* RUN `mypy --strict` or `pyright` before committing
+
+## Free-Threading (3.14+)
+
+* BUILD with `--disable-gil` or USE `python3.14t`
+* SET `PYTHON_GIL=0` in production for free-threading
+* USE `threading.Lock()` for all shared mutable state
+* USE `queue.Queue` for thread communication
+* DESIGN all code to be thread-safe by default
+* AVOID global mutable state
+* USE `concurrent.futures.ThreadPoolExecutor` for parallelism
+
+## JIT Optimization
+
+* SET `PYTHON_JIT=1` in production
+* BUILD with `--enable-experimental-jit=yes-with-tracing`
+* USE `@functools.cache` or `@lru_cache` on expensive pure functions
+* PROFILE with `cProfile` before optimizing
+
+## String & Formatting
+
+* USE f-strings, NEVER `%` formatting or `.format()`
+* USE `f"{var=}"` for debug printing
+* USE `str.removeprefix()` and `str.removesuffix()` (NOT slicing)
+* USE `_` in numeric literals: `1_000_000`
+
+## Data Structures
+
+* USE `@dataclass(slots=True, frozen=True, kw_only=True)` by default
+* USE `field(default_factory=list)` for mutable defaults
+* USE `dict | dict` for merging (NOT `.update()` or `{**a, **b}`)
+* USE `__slots__` in classes when memory matters
+
+## Async/Await
+
+* USE `async with asyncio.TaskGroup() as tg:` for structured concurrency
+* USE `asyncio.timeout()` for deadline-based cancellation
+* ALWAYS name tasks: `create_task(coro, name="task_name")`
+* USE `asyncio.Runner()` for managing event loops
+* NEVER use `asyncio.create_task()` without awaiting or storing reference
+
+## Control Flow
+
+* USE structural pattern matching for complex conditionals
+* USE walrus operator `:=` to reduce repeated computations
+* USE `except*` for exception groups
+* PREFER comprehensions over `map()`/`filter()`
+
+## Standard Library
+
+* USE `pathlib.Path` (NEVER string paths with `os.path`)
+* USE `zoneinfo.ZoneInfo` for timezones
+* USE `tomllib` for TOML parsing
+* USE `functools.cache` (NOT `lru_cache` without args)
+* USE `itertools.batched()` for chunking
+* USE context managers (`with`) for ALL resources
+
+## Error Handling
+
+* RAISE exceptions, NEVER return error codes
+* USE custom exception classes inheriting from built-in exceptions
+* USE `ExceptionGroup` when multiple errors can occur
+* INCLUDE error context with `raise ... from e`
+
+## Code Quality - MANDATORY
+
+* RUN `ruff check . && ruff format .` before every commit
+* RUN `mypy --strict .` before every commit
+* USE `ruff` (NEVER `black`, `flake8`, `isort` separately)
+* SET line length: 100 characters
+* USE pre-commit hooks with `ruff`, `mypy`, `bandit`
+
+## Testing - MANDATORY
+
+* USE `pytest` (NOT `unittest`)
+* USE fixtures for setup/teardown
+* USE `@pytest.mark.parametrize()` for multiple test cases
+* RUN `pytest --cov=. --cov-report=term-missing`
+* MOCK with `pytest-mock` or `unittest.mock`
+* USE `pytest-asyncio` for async tests
+
+## Packaging
+
+* USE `pyproject.toml` for ALL configuration
+* USE `uv` for dependency management (10-100x faster than pip)
+* LOCK dependencies with `uv lock`
+* SPECIFY Python version: `requires-python = ">=3.14"`
+* USE `[project.scripts]` for CLI entry points
+
+## Security
+
+* NEVER use `eval()` or `exec()` on user input
+* VALIDATE all user input with type checking or validation libraries
+* USE `secrets` module for tokens/passwords (NOT `random`)
+* USE `subprocess.run()` with explicit args (NOT shell=True)
+* RUN `bandit -r .` before production deployment
+* RUN `pip-audit` to check for vulnerable dependencies
+
+## Anti-Patterns - FORBIDDEN
+
+* NEVER use wildcard imports: `from module import *`
+* NEVER use bare `except:` - always specify exception types
+* NEVER mutate function arguments
+* NEVER use mutable default arguments
+* NEVER use `==` for singletons - use `is None`, `is True`, `is False`
+* NEVER ignore type errors - fix them
+* NEVER use `print()` in production code - use logging
+* NEVER use `os.system()` - use `subprocess.run()`
+
+## Logging
+
+* USE `logging` module (NEVER `print()` in production)
+* CONFIGURE structured logging with JSON in production
+* USE `logger.exception()` in except blocks
+* SET appropriate log levels: DEBUG, INFO, WARNING, ERROR, CRITICAL
+
+## Performance
+
+* USE `__slots__` in frequently instantiated classes
+* USE generators for large datasets
+* USE `functools.cache` for pure expensive functions
+* PROFILE before optimizing (cProfile, line_profiler)
+* AVOID premature optimization
+
+## Immutability
+
+* PREFER immutable data structures (frozen dataclasses, tuples)
+* USE `frozenset` over `set` when possible
+* USE `tuple` over `list` when data won't change
+* MARK dataclasses as `frozen=True` when possible
+
+## Documentation
+
+* WRITE docstrings for ALL public functions/classes (Google or NumPy style)
+* INCLUDE type hints (NOT types in docstrings)
+* DOCUMENT exceptions that can be raised
+* KEEP comments explaining "why", NOT "what"
+
+## Async Best Practices
+
+* NEVER mix blocking I/O in async functions
+* USE `asyncio.to_thread()` for blocking operations
+* USE `anyio` or `trio` for advanced async patterns
+* CANCEL tasks properly in exception handlers
