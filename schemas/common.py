@@ -8,4 +8,3 @@ class HealthCheck(BaseModel):
 
     status: str
     network_loaded: bool
-    mnist_loaded: bool

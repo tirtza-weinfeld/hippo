@@ -1,125 +1,230 @@
-# Architecture Overview
+# Architecture Overview - Inference API + Local Training
 
-## Clean, Modular Structure
+## Design Philosophy
 
-The project is organized for scalability and adding more neural network tutorials:
+**Separation of Concerns:**
+- **Training**: Happens locally in Python scripts (slow, resource-intensive, learning-focused)
+- **API**: Inference-only (fast, lightweight, production-ready)
+- **Model Storage**: Hugging Face Hub (versioned, public, free, efficient)
+
+## Project Structure
 
 ```
 hippo/
-├── api/                     # API layer
-│   ├── main.py              # FastAPI app entry point
-│   ├── state.py             # Global app state
-│   └── routes/              # Route modules by domain
-│       ├── network.py       # Neural network operations
-│       └── mnist.py         # MNIST data operations
+├── api/                        # Inference-only FastAPI
+│   ├── main.py                 # App entry, loads models from HF Hub
+│   └── routes/
+│       ├── inference.py        # POST /predict, POST /activations
+│       └── mnist.py            # GET /mnist/samples
 │
-├── neural_networks/         # ML implementations
-│   ├── core.py              # Basic feedforward network
-│   └── mnist_loader.py      # MNIST dataset handler
+├── training/                   # Local training workflows
+│   ├── train_mnist.py          # Train feedforward networks locally
+│   ├── upload_to_hf.py         # Upload trained models to HF Hub
+│   ├── experiments/            # Training experiments & notebooks
+│   └── README.md               # Training guide
 │
-├── schemas/                 # Pydantic models
-│   ├── common.py            # Shared schemas
-│   ├── network.py           # Network-related schemas
-│   └── mnist.py             # MNIST schemas
+├── hf_hub/                     # Hugging Face Hub integration
+│   ├── model_manager.py        # Download & cache models from HF Hub
+│   └── config.py               # HF Hub configuration (repo IDs, etc.)
 │
-└── data/                    # Auto-downloaded datasets
+├── neural_networks/            # Core ML implementations
+│   ├── core.py                 # NeuralNetwork class (pure NumPy)
+│   └── mnist_loader.py         # MNIST dataset utilities
+│
+├── schemas/                    # Pydantic validation models
+│   ├── inference.py            # PredictionInput, PredictionOutput, etc.
+│   └── mnist.py                # MNISTSample, etc.
+│
+└── docs/
+    ├── ARCHITECTURE.md         # This file
+    ├── TRAINING.md             # Local training workflow
+    └── API.md                  # API documentation
 ```
 
-## Key Design Decisions
+## Component Responsibilities
 
-### 1. Async Training with Streaming
-Instead of blocking for minutes, training uses **Server-Sent Events (SSE)** to stream progress:
-- Frontend stays responsive
-- Real-time progress updates
-- Clean cancellation handling
+### 1. API Layer (`api/`)
 
-### 2. Modular Routes
-Each domain gets its own route module:
-- `network.py` - Network lifecycle (create, train, predict, activations, state)
-- `mnist.py` - Dataset operations (samples)
-- Easy to add: `cnn.py`, `rnn.py`, etc.
+**Purpose**: Serve pre-trained models for inference only
 
-### 3. Separated Concerns
-- `neural_networks/` - Pure ML code, no HTTP
-- `api/` - HTTP layer, delegates to neural_networks
-- `schemas/` - Data validation contracts
+**Endpoints**:
+```
+POST /predict
+  - Input: 784 pixels [0-1]
+  - Output: Predicted digit, confidence, probabilities
+  - Uses model loaded from HF Hub
 
-### 4. State Management
-Global state in `api/state.py`:
-- Single network instance
-- MNIST datasets loaded once
-- Training lock to prevent concurrent training
+POST /activations
+  - Input: 784 pixels
+  - Output: All layer activations (for visualization)
 
-## Adding New Neural Network Types
+GET /mnist/samples
+  - Output: Random MNIST test samples
+  - For testing/demo purposes
 
-Want to add CNNs? Follow this pattern:
+GET /models
+  - Output: List of available models from HF Hub
+  - Metadata: architecture, accuracy, training info
+```
 
+**Model Loading**:
+- On startup, download specified model from HF Hub
+- Cache locally for fast inference
+- No dynamic model creation or training
+
+**State Management**:
+- Single global model instance (loaded at startup)
+- No training state (no locks, progress tracking, etc.)
+- Stateless inference (no sessions)
+
+### 2. Training Layer (`training/`)
+
+**Purpose**: Local training scripts for learning & experimentation
+
+**Workflow**:
 ```python
-# 1. Implement in neural_networks/cnn.py
-class ConvolutionalNetwork:
-    def __init__(self, ...): ...
-    def forward(self, ...): ...
+# 1. Train locally
+python training/train_mnist.py \
+    --sizes 784 100 10 \
+    --activation relu \
+    --epochs 30 \
+    --learning-rate 3.0
 
-# 2. Create schemas in schemas/cnn.py
-class CNNCreate(BaseModel): ...
-class CNNOutput(BaseModel): ...
-
-# 3. Create routes in api/routes/cnn.py
-router = APIRouter(prefix="/cnn")
-
-@router.post("/create")
-def create_cnn(...): ...
-
-# 4. Include in api/main.py
-from api.routes import cnn
-app.include_router(cnn.router)
+# 2. Upload to HF Hub
+python training/upload_to_hf.py \
+    --model-path models/mnist-784-100-10-relu.npz \
+    --name "MNIST Feedforward 784-100-10 ReLU" \
+    --accuracy 95.4
 ```
 
-## API Design Principles
+**Features**:
+- Detailed logging (training curves, metrics)
+- Jupyter notebook integration for analysis
+- Experiment tracking
+- Model checkpointing
+- No API dependencies (pure Python)
 
-### Essential Endpoints Only
-- ✅ Create network
-- ✅ Train (streaming)
-- ✅ Predict
-- ✅ Get activations (for visualization)
-- ✅ Get state (for save/load)
-- ✅ Get samples (for testing)
-- ❌ Internal-only operations
+### 3. HF Hub Integration (`hf_hub/`)
 
-### Streaming for Long Operations
-Training takes minutes, so:
+**Purpose**: Bridge between local training and API inference
+
+**Model Manager**:
+```python
+from hf_hub import ModelManager
+
+# Download model from HF Hub
+manager = ModelManager()
+network = manager.load_model("username/hippo-mnist-relu-95")
+
+# Upload new model
+manager.upload_model(
+    network=trained_network,
+    name="mnist-relu-95",
+    metadata={"accuracy": 95.4, "epochs": 30}
+)
 ```
-POST /network/train → SSE stream
-data: {epoch: 1, accuracy_percent: 82.34}
-data: {epoch: 2, accuracy_percent: 85.67}
-...
-data: {status: "completed"}
+
+**Storage Format**:
+```
+your-hf-username/hippo-neural-networks/
+├── mnist-784-30-10-sigmoid-92.npz      # Model weights/biases
+├── mnist-784-30-10-sigmoid-92.json     # Metadata (architecture, accuracy)
+├── mnist-784-100-10-relu-95.npz
+├── mnist-784-100-10-relu-95.json
+└── README.md                            # Model card
 ```
 
-Frontend uses `EventSource`:
-```javascript
-const es = new EventSource('/network/train');
-es.onmessage = (e) => updateProgressBar(JSON.parse(e.data));
+### 4. Neural Networks (`neural_networks/`)
+
+**No changes** - Pure ML implementations, no HTTP concerns
+
+## Data Flow
+
+### Training Flow (Local)
+```
+1. Run training script
+   ↓
+2. NeuralNetwork trains on MNIST locally
+   ↓
+3. Save model as .npz (NumPy compressed)
+   ↓
+4. Upload to HF Hub with metadata
+   ↓
+5. Model available for API to download
 ```
 
-### Type Safety Everywhere
-- Pydantic validates all inputs
-- Type hints on all functions
-- `mypy --strict` compliance
+### Inference Flow (API)
+```
+1. API starts → Downloads model from HF Hub
+   ↓
+2. User sends POST /predict request
+   ↓
+3. API runs feedforward (NumPy)
+   ↓
+4. Returns prediction
+```
 
-## Code Quality
+## Benefits of This Architecture
 
-Following `.cursor/rules/python.mdc`:
-- Modern Python 3.14+ syntax
-- No `Union`, `Optional` - use `|` instead
-- No wildcard imports
-- Full docstrings
-- `ruff` formatting
-- `mypy --strict` type checking
+### For Learning
+- ✅ Train interactively in Jupyter notebooks
+- ✅ Detailed logging & visualization
+- ✅ No API complexity during learning
+- ✅ Full control over training process
 
-## Next Steps
+### For API
+- ✅ Lightweight (no training code)
+- ✅ Fast startup (download cached models)
+- ✅ Stateless & scalable
+- ✅ Production-ready
 
-1. **Test the API**: Run `uvicorn api.main:app --reload`
-2. **Connect Frontend**: Use provided example code in README
-3. **Add More Networks**: Follow the pattern above
-4. **Persist Models**: Add save/load endpoints using network state
+### For Model Management
+- ✅ Version control (Git-backed)
+- ✅ Public sharing & portfolio
+- ✅ Efficient storage (binary format)
+- ✅ Free unlimited storage
+
+## Migration from Current Design
+
+**Removed**:
+- ❌ `POST /network/create` - No dynamic creation
+- ❌ `POST /network/train` - Training is local
+- ❌ `POST /network/save`, `GET /network/saved`, `POST /network/load` - HF Hub replaces DB
+- ❌ `db.py`, `models.py`, `init_db.py` - No database needed
+- ❌ Neon PostgreSQL integration (saved for future user features)
+
+**Added**:
+- ✨ `training/` directory - Local training scripts
+- ✨ `hf_hub/` module - HF Hub integration
+- ✨ `GET /models` - List available models from HF Hub
+
+**Kept**:
+- ✅ `POST /predict` - Core inference
+- ✅ `POST /activations` - Visualization support
+- ✅ `GET /mnist/samples` - Test data
+- ✅ `neural_networks/core.py` - ML implementation
+
+## Environment Variables
+
+```bash
+# .env
+HUGGINGFACE_TOKEN=hf_...           # HF Hub write access (for uploads)
+HF_MODEL_REPO=username/hippo-models # Default model repository
+DEFAULT_MODEL=mnist-relu-95         # Model to load on startup
+ALLOWED_ORIGINS=https://...         # CORS origins
+```
+
+## Future Additions
+
+When adding user accounts or custom features:
+
+**Bring back Neon DB for**:
+- User authentication
+- User-specific model preferences
+- Training history tracking
+- Private model metadata
+
+**Keep HF Hub for**:
+- Actual model weights (efficient binary storage)
+- Public model sharing
+- Version control

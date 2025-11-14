@@ -4,6 +4,7 @@ pydantic==2.11.7
 pydantic-settings==2.10.1
 python-dotenv==1.1.1
 numpy==2.2.0
+huggingface-hub==0.26.5
 
 # For learning/analysis (optional - only needed for Jupyter notebooks)
 jupyter==1.1.1

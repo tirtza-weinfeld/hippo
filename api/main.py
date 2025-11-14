@@ -1,7 +1,7 @@
-"""Neural Network Learning API - Main application.
+"""Neural Network Inference API - Main application.
 
-Modern Python 3.14+ FastAPI backend for learning neural networks
-following the 3Blue1Brown tutorial series.
+Inference-only FastAPI backend that loads pre-trained models from Hugging Face Hub.
+Models are trained locally and uploaded to HF Hub separately.
 """
 
 import os
@@ -12,9 +12,9 @@ from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from api.routes import network, mnist
+from api.routes import inference
 from api.state import state
-from neural_networks import MNISTLoader
+from hf_hub import ModelManager, get_default_model
 from schemas import HealthCheck
 
 load_dotenv()
@@ -22,7 +22,7 @@ load_dotenv()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
-    """Load MNIST data on startup.
+    """Load model from HF Hub on startup.
 
     Args:
         app: FastAPI application instance
@@ -30,19 +30,29 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     Yields:
         None after initialization
     """
+    # Load model from Hugging Face Hub
     try:
-        state.training_data, state.validation_data, state.test_data = MNISTLoader.load_data()
-        state.mnist_loaded = True
-    except RuntimeError as e:
-        print(f"Warning: Failed to load MNIST data: {e}")
+        print("Loading model from Hugging Face Hub...")
+        model_name = get_default_model()
+        manager = ModelManager()
+        state.network = manager.load_model(model_name)
+        print(f"✓ Loaded model: {model_name}")
+        print(f"  Architecture: {state.network.sizes}")
+        print(f"  Activation: {state.network.activation_name}")
+    except Exception as e:
+        print(f"ERROR: Failed to load model from HF Hub: {e}")
+        print("Please check your .env configuration:")
+        print("  - HF_MODEL_REPO=your-username/hippo-models")
+        print("  - DEFAULT_MODEL=model-name")
+        print("  - HUGGINGFACE_TOKEN=hf_... (optional for public repos)")
 
     yield
 
 
 app = FastAPI(
-    title="Neural Network Learning API",
-    description="Backend for learning neural networks following 3Blue1Brown tutorial",
-    version="1.0.0",
+    title="Neural Network Inference API",
+    description="Inference-only API for neural networks trained locally. Models loaded from Hugging Face Hub.",
+    version="2.0.0",
     lifespan=lifespan,
 )
 
@@ -57,13 +67,12 @@ app.add_middleware(
 )
 
 # Include routers
-app.include_router(network.router)
-app.include_router(mnist.router)
+app.include_router(inference.router)
 
 
 @app.get("/healthz", response_model=HealthCheck)
 def health_check() -> HealthCheck:
-    """Check API health and data loading status.
+    """Check API health and model loading status.
 
     Returns:
         Health check response with system status
@@ -71,5 +80,4 @@ def health_check() -> HealthCheck:
     return HealthCheck(
         status="healthy",
         network_loaded=state.network is not None,
-        mnist_loaded=state.mnist_loaded,
     )

@@ -66,7 +66,7 @@ If any instruction conflicts with `.cursor/rules/python.mdc`, the Python rules f
 
 ## Project Context
 
-This is a neural network learning API (FastAPI + NumPy) following the 3Blue1Brown tutorial series. The project uses a modular architecture to support multiple network types (feedforward, CNN, RNN, etc.).
+This is a neural network learning API (FastAPI + NumPy). The project uses a modular architecture to support multiple network types (feedforward, CNN, RNN, etc.).
 
 ### Current Architecture
 - `api/` - FastAPI routes (separate routers per network type)

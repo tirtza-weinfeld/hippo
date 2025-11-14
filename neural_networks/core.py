@@ -1,4 +1,4 @@
-"""Neural Network implementation following 3Blue1Brown tutorial.
+"""Neural Network implementation.
 
 Modern Python 3.14+ implementation with NumPy for learning purposes.
 """
@@ -14,7 +14,7 @@ NDArrayFloat = npt.NDArray[np.floating]
 class NeuralNetwork:
     """Feedforward neural network with backpropagation.
 
-    Implements the neural network described in 3Blue1Brown's series:
+    Implements the neural network :
     - Configurable layer sizes
     - Sigmoid or ReLU activation
     - Stochastic gradient descent training
@@ -110,7 +110,7 @@ class NeuralNetwork:
             # Shuffle and create mini-batches
             np.random.shuffle(training_data)
             mini_batches = [
-                training_data[k:k + mini_batch_size]
+                training_data[k : k + mini_batch_size]
                 for k in range(0, n, mini_batch_size)
             ]
 
@@ -124,6 +124,7 @@ class NeuralNetwork:
                 accuracy = self.evaluate(test_data)
                 metrics["test_accuracy"] = accuracy
                 metrics["test_total"] = len(test_data)
+                print(f"Epoch {epoch + 1}/{epochs}: {accuracy}/{len(test_data)} correct ({accuracy/len(test_data)*100:.2f}%)")
 
             history.append(metrics)
 
@@ -139,8 +140,7 @@ class NeuralNetwork:
             Number of correct predictions
         """
         test_results = [
-            (np.argmax(self.feedforward(x)), np.argmax(y))
-            for x, y in test_data
+            (np.argmax(self.feedforward(x)), np.argmax(y)) for x, y in test_data
         ]
         return sum(int(pred == actual) for pred, actual in test_results)
 
@@ -167,12 +167,8 @@ class NeuralNetwork:
 
         # Update weights and biases
         eta_over_m = learning_rate / len(mini_batch)
-        self.weights = [
-            w - eta_over_m * nw for w, nw in zip(self.weights, nabla_w)
-        ]
-        self.biases = [
-            b - eta_over_m * nb for b, nb in zip(self.biases, nabla_b)
-        ]
+        self.weights = [w - eta_over_m * nw for w, nw in zip(self.weights, nabla_w)]
+        self.biases = [b - eta_over_m * nb for b, nb in zip(self.biases, nabla_b)]
 
     def _backprop(
         self,
@@ -203,7 +199,9 @@ class NeuralNetwork:
             activations.append(activation)
 
         # Backward pass - compute deltas
-        delta = self._cost_derivative(activations[-1], y) * self._activation_derivative(zs[-1])
+        delta = self._cost_derivative(activations[-1], y) * self._activation_derivative(
+            zs[-1]
+        )
         nabla_b[-1] = delta
         nabla_w[-1] = delta @ activations[-2].T
 
@@ -264,7 +262,7 @@ class NeuralNetwork:
         """
         return output_activations - y
 
-    def to_dict(self) -> dict[str, list[list[float]] | list[int] | str]:
+    def to_dict(self) -> dict[str, object]:
         """Export network state to dictionary.
 
         Returns:
@@ -278,7 +276,7 @@ class NeuralNetwork:
         }
 
     @classmethod
-    def from_dict(cls, data: dict[str, list[list[float]] | list[int] | str]) -> "NeuralNetwork":
+    def from_dict(cls, data: dict[str, object]) -> "NeuralNetwork":
         """Load network from dictionary.
 
         Args:
@@ -295,16 +293,18 @@ class NeuralNetwork:
         if not isinstance(data.get("activation"), str):
             raise ValueError("Missing or invalid 'activation' field")
 
-        sizes = data["sizes"]
-        activation = data["activation"]
+        sizes: list[int] = data["sizes"]  # type: ignore[assignment]
+        activation: str = data["activation"]  # type: ignore[assignment]
 
         if activation not in ("sigmoid", "relu"):
             raise ValueError(f"Invalid activation: {activation}")
 
-        network = cls(sizes, activation)  # type: ignore
+        network = cls(sizes, activation)  # type: ignore[arg-type]
 
         if "weights" in data and "biases" in data:
-            network.weights = [np.array(w, dtype=np.float64) for w in data["weights"]]
-            network.biases = [np.array(b, dtype=np.float64) for b in data["biases"]]
+            weights_data: list[list[list[float]]] = data["weights"]  # type: ignore[assignment]
+            biases_data: list[list[list[float]]] = data["biases"]  # type: ignore[assignment]
+            network.weights = [np.array(w, dtype=np.float64) for w in weights_data]
+            network.biases = [np.array(b, dtype=np.float64) for b in biases_data]
 
         return network

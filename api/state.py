@@ -1,17 +1,15 @@
 """Global application state."""
 
-from neural_networks import NeuralNetwork, DataPair
+from neural_networks import NeuralNetwork
 
 
 class AppState:
-    """Application state container."""
+    """Application state container.
+
+    Holds the loaded model from HF Hub for inference.
+    """
 
     network: NeuralNetwork | None = None
-    training_data: list[DataPair] = []
-    validation_data: list[DataPair] = []
-    test_data: list[DataPair] = []
-    mnist_loaded: bool = False
-    is_training: bool = False
 
 
 # Global state instance

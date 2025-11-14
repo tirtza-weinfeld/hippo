@@ -44,7 +44,9 @@ class MNISTLoader:
 
         try:
             with gzip.open(cls.MNIST_FILE, "rb") as f:
-                training_data, validation_data, test_data = pickle.load(f, encoding="latin1")
+                training_data, validation_data, test_data = pickle.load(
+                    f, encoding="latin1"
+                )
         except Exception as e:
             raise RuntimeError(f"Failed to load MNIST data: {e}") from e
 
@@ -81,12 +83,8 @@ class MNISTLoader:
             List of (input, one_hot_label) pairs
         """
         inputs, labels = data
-        formatted_inputs = [
-            np.reshape(x, (784, 1)).astype(np.float64) for x in inputs
-        ]
-        formatted_labels = [
-            _vectorize_label(y) for y in labels
-        ]
+        formatted_inputs = [np.reshape(x, (784, 1)).astype(np.float64) for x in inputs]
+        formatted_labels = [_vectorize_label(y) for y in labels]
         return list(zip(formatted_inputs, formatted_labels))
 
     @staticmethod
@@ -102,12 +100,8 @@ class MNISTLoader:
             List of (input, one_hot_label) pairs
         """
         inputs, labels = data
-        formatted_inputs = [
-            np.reshape(x, (784, 1)).astype(np.float64) for x in inputs
-        ]
-        formatted_labels = [
-            _vectorize_label(y) for y in labels
-        ]
+        formatted_inputs = [np.reshape(x, (784, 1)).astype(np.float64) for x in inputs]
+        formatted_labels = [_vectorize_label(y) for y in labels]
         return list(zip(formatted_inputs, formatted_labels))
 
 

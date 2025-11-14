@@ -1,17 +1,25 @@
-# Neural Network Learning API
+# Hippo - Neural Network Learning API
 
-Backend API for learning neural networks following the [3Blue1Brown tutorial](https://www.3blue1brown.com/lessons/neural-networks).
+Backend inference API for neural networks trained locally.
+Modern Python 3.14+ implementation with NumPy. Models are trained locally and served via FastAPI for frontend applications.
 
-Modern Python 3.14+ implementation with NumPy, designed as a clean backend for frontend applications.
+## Architecture
+
+**Training**: Local Python scripts with detailed logging
+**Storage**: Hugging Face Hub (versioned, public, efficient)
+**API**: Inference-only (fast, lightweight, production-ready)
+
+```
+Local Training → Upload to HF Hub → API Downloads → Inference
+```
 
 ## Features
 
-- **Create Neural Networks**: Define custom architectures (layer sizes, activation functions)
-- **Train on MNIST**: Learn handwritten digit recognition (0-9) with real-time progress
+- **Inference API**: Load pre-trained models from Hugging Face Hub
 - **Real-time Predictions**: Get predictions with confidence scores
 - **Visualization Support**: Access all layer activations for frontend visualization
 - **MNIST Samples**: Fetch random samples for testing
-- **Streaming Training**: Server-sent events for live training progress updates
+- **Local Training**: Train models locally with full control
 
 ## Quick Start
 
@@ -20,6 +28,15 @@ Modern Python 3.14+ implementation with NumPy, designed as a clean backend for f
 ```bash
 # Install dependencies
 pip install -r requirements.txt
+```
+
+### API Server (Inference Only)
+
+```bash
+# Set up environment
+echo "HF_MODEL_REPO=your-username/hippo-models" >> .env
+echo "DEFAULT_MODEL=mnist-relu-95" >> .env
+echo "ALLOWED_ORIGINS=http://localhost:3000" >> .env
 
 # Run the server
 uvicorn api.main:app --reload
@@ -27,113 +44,85 @@ uvicorn api.main:app --reload
 
 The API will be available at `http://localhost:8000`
 
-### API Documentation
-
 Visit `http://localhost:8000/docs` for interactive Swagger UI documentation.
+
+**For production deployment:** See [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) for Railway setup.
+
+### Local Training
+
+```bash
+# Train a new model
+python training/train_mnist.py \
+    --sizes 784 100 10 \
+    --activation relu \
+    --epochs 30 \
+    --learning-rate 3.0
+
+# Upload to Hugging Face Hub
+python training/upload_to_hf.py \
+    --model-path models/mnist-784-100-10-relu.npz \
+    --name "MNIST ReLU 95% accuracy" \
+    --accuracy 95.4
+```
+
+See [`training/README.md`](training/README.md) for detailed training workflow.
 
 ## Project Structure
 
 ```
 hippo/
-├── api/
-│   ├── main.py              # FastAPI application entry point
-│   ├── state.py             # Global application state
+├── api/                        # Inference-only FastAPI
+│   ├── main.py                 # App entry point
 │   └── routes/
-│       ├── network.py       # Neural network endpoints
-│       └── mnist.py         # MNIST dataset endpoints
-├── neural_networks/
-│   ├── core.py              # Neural network implementation
-│   └── mnist_loader.py      # MNIST data handling
-├── schemas/
-│   ├── common.py            # Common schemas (health check)
-│   ├── network.py           # Network-related schemas
-│   └── mnist.py             # MNIST schemas
-├── data/                    # MNIST dataset (auto-downloaded)
-├── requirements.txt
-└── README.md
+│       ├── inference.py        # Prediction & activations
+│       └── mnist.py            # MNIST samples
+│
+├── training/                   # Local training scripts
+│   ├── train_mnist.py          # Train feedforward networks
+│   ├── upload_to_hf.py         # Upload models to HF Hub
+│   └── README.md               # Training guide
+│
+├── hf_hub/                     # HF Hub integration
+│   ├── model_manager.py        # Download & cache models
+│   └── config.py               # Configuration
+│
+├── neural_networks/            # Core ML implementations
+│   ├── core.py                 # NeuralNetwork class
+│   └── mnist_loader.py         # MNIST utilities
+│
+├── schemas/                    # Pydantic models
+│   ├── inference.py            # API contracts
+│   └── mnist.py                # MNIST schemas
+│
+└── docs/
+    ├── ARCHITECTURE.md         # Architecture overview
+    ├── DEPLOYMENT.md           # Railway + HF Hub deployment
+    ├── TRAINING.md             # Training workflow
+    └── API.md                  # API documentation
 ```
 
 ## API Endpoints
 
-### Health Check
+### Models
+
+#### List Available Models
 ```http
-GET /healthz
+GET /models
 ```
-Check if API is running and data is loaded.
+Returns list of available models from Hugging Face Hub.
 
-### Network Management
+### Inference
 
-#### Create Network
+#### Predict
 ```http
-POST /network/create
-Content-Type: application/json
-
-{
-  "sizes": [784, 30, 10],
-  "activation": "sigmoid"
-}
-```
-Creates a neural network:
-- Input: 784 neurons (28x28 MNIST images)
-- Hidden: 30 neurons
-- Output: 10 neurons (digits 0-9)
-
-#### Get Network State
-```http
-GET /network/state
-```
-Returns current weights, biases, and configuration (large response).
-
-### Training (with Real-time Progress)
-
-```http
-POST /network/train
-Content-Type: application/json
-
-{
-  "epochs": 30,
-  "mini_batch_size": 10,
-  "learning_rate": 3.0,
-  "use_test_data": true
-}
-```
-
-Returns **Server-Sent Events (SSE)** stream:
-```
-data: {"epoch": 1, "total_epochs": 30, "test_accuracy": 8234, "test_total": 10000, "accuracy_percent": 82.34}
-
-data: {"epoch": 2, "total_epochs": 30, "test_accuracy": 8567, "test_total": 10000, "accuracy_percent": 85.67}
-
-...
-
-data: {"status": "completed"}
-```
-
-**Frontend Example (EventSource):**
-```javascript
-const eventSource = new EventSource('http://localhost:8000/network/train');
-
-eventSource.onmessage = (event) => {
-  const data = JSON.parse(event.data);
-  if (data.status === 'completed') {
-    console.log('Training completed!');
-    eventSource.close();
-  } else {
-    console.log(`Epoch ${data.epoch}/${data.total_epochs}: ${data.accuracy_percent}% accuracy`);
-  }
-};
-```
-
-### Predictions
-
-```http
-POST /network/predict
+POST /predict
 Content-Type: application/json
 
 {
   "pixels": [0.0, 0.1, ..., 0.0]  // 784 values [0, 1]
 }
 ```
+
 Returns:
 ```json
 {
@@ -143,32 +132,65 @@ Returns:
 }
 ```
 
-### Visualization
-
+#### Get Activations (for Visualization)
 ```http
-POST /network/activations
+POST /activations
 Content-Type: application/json
 
 {
   "pixels": [0.0, 0.1, ..., 0.0]
 }
 ```
-Returns activations for all layers (visualize what each layer "sees").
+
+Returns activations for all layers to visualize what each layer "sees".
 
 ### MNIST Samples
 
 ```http
 GET /mnist/samples?count=10&dataset=test
 ```
-Get random MNIST samples. Datasets: `train`, `validation`, `test`.
 
-## Neural Network Details
+Get random MNIST samples for testing. Datasets: `train`, `validation`, `test`.
 
-Following the 3Blue1Brown tutorial:
+## Neural Network Implementation
 
 1. **Feedforward**: `a = σ(w·a_prev + b)`
 2. **Backpropagation**: Compute gradients using chain rule
 3. **Training**: Stochastic gradient descent with mini-batches
+
+## Training Locally
+
+```python
+from neural_networks import NeuralNetwork
+from neural_networks.mnist_loader import load_data_wrapper
+
+# Load MNIST
+training_data, validation_data, test_data = load_data_wrapper()
+
+# Create network (784 inputs, 100 hidden, 10 outputs)
+network = NeuralNetwork(sizes=[784, 100, 10], activation="relu")
+
+# Train
+network.train(
+    training_data=training_data,
+    epochs=30,
+    mini_batch_size=10,
+    learning_rate=3.0,
+    test_data=test_data
+)
+
+# Save
+import numpy as np
+np.savez_compressed(
+    'model.npz',
+    weights=[w.tolist() for w in network.weights],
+    biases=[b.tolist() for b in network.biases],
+    sizes=network.sizes,
+    activation=network.activation_name
+)
+```
+
+See [`docs/TRAINING.md`](docs/TRAINING.md) for complete training guide.
 
 ## Code Quality Standards
 
@@ -180,21 +202,33 @@ This project follows strict Python 3.14+ rules (see `.cursor/rules/python.mdc`):
 - `ruff` for linting/formatting
 - `mypy --strict` for type checking
 
-## Extending for More Tutorials
+## Example Frontend Integration
 
-The modular structure makes it easy to add new neural network tutorials:
+```javascript
+// 1. Get test samples
+const samples = await fetch('http://localhost:8000/mnist/samples?count=5')
+  .then(r => r.json());
 
+// 2. Make a prediction
+const prediction = await fetch('http://localhost:8000/predict', {
+  method: 'POST',
+  headers: {'Content-Type': 'application/json'},
+  body: JSON.stringify({pixels: samples.samples[0].pixels})
+}).then(r => r.json());
+
+console.log(`Predicted: ${prediction.predicted_digit}`);
+console.log(`Actual: ${samples.samples[0].label}`);
+console.log(`Confidence: ${prediction.confidence}`);
 ```
-neural_networks/
-  ├── core.py              # Basic feedforward network
-  ├── cnn.py               # Add CNNs here
-  ├── rnn.py               # Add RNNs here
-  └── gan.py               # Add GANs here
 
-api/routes/
-  ├── network.py           # Basic network routes
-  ├── cnn_routes.py        # Add CNN routes here
-  └── ...
+## Environment Variables
+
+```bash
+# .env
+HF_MODEL_REPO=your-username/hippo-models  # Your HF Hub repository
+DEFAULT_MODEL=mnist-relu-95                # Model to load on startup
+HUGGINGFACE_TOKEN=hf_...                   # For uploading models (optional for API)
+ALLOWED_ORIGINS=http://localhost:3000      # CORS origins
 ```
 
 ## Learning Resources
@@ -203,35 +237,36 @@ api/routes/
 - [Original Reference Code](https://github.com/3b1b/videos/tree/master/_2017/nn)
 - [MNIST Dataset](http://yann.lecun.com/exdb/mnist/)
 
-## Example Usage
+## Next Steps
 
-```python
-import requests
+### For Learning
+1. Run local training scripts
+2. Experiment with different architectures
+3. Upload your best models to HF Hub
+4. Share your progress publicly
 
-# 1. Create a network
-requests.post("http://localhost:8000/network/create", json={
-    "sizes": [784, 30, 10],
-    "activation": "sigmoid"
-})
+### For Frontend Development
+1. **Model Selection**: UI to choose from available models
+2. **Digit Drawing Canvas**: Let users draw digits for prediction
+3. **Activation Visualization**: Show what each layer activates on
+4. **Sample Gallery**: Display MNIST samples with predictions
 
-# 2. Get test samples
-samples = requests.get("http://localhost:8000/mnist/samples?count=5").json()
+## Future Extensions
 
-# 3. Make a prediction (before training - will be random)
-response = requests.post("http://localhost:8000/network/predict", json={
-    "pixels": samples["samples"][0]["pixels"]
-})
-print(f"Predicted: {response.json()['predicted_digit']}")
-print(f"Actual: {samples['samples'][0]['label']}")
+The modular structure makes it easy to add new neural network types:
 
-# 4. Train with streaming progress (use EventSource in browser)
-# See frontend example above
+```
+neural_networks/
+  ├── core.py              # Basic feedforward network ✓
+  ├── cnn.py               # Convolutional networks (future)
+  ├── rnn.py               # Recurrent networks (future)
+  └── gan.py               # Generative adversarial networks (future)
 ```
 
-## Next Steps for Your Frontend
-
-1. **Create Network UI**: Form to specify layer sizes
-2. **Training Progress**: Real-time progress bar using SSE
-3. **Digit Drawing Canvas**: Let users draw digits for prediction
-4. **Activation Visualization**: Show what each layer activates on
-5. **Sample Gallery**: Display MNIST samples with predictions
+Each new network type gets its own route module:
+```
+api/routes/
+  ├── inference.py         # Basic feedforward ✓
+  ├── cnn.py               # CNN routes (future)
+  └── rnn.py               # RNN routes (future)
+```
