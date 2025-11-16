@@ -124,7 +124,9 @@ class NeuralNetwork:
                 accuracy = self.evaluate(test_data)
                 metrics["test_accuracy"] = accuracy
                 metrics["test_total"] = len(test_data)
-                print(f"Epoch {epoch + 1}/{epochs}: {accuracy}/{len(test_data)} correct ({accuracy/len(test_data)*100:.2f}%)")
+                print(
+                    f"Epoch {epoch + 1}/{epochs}: {accuracy}/{len(test_data)} correct ({accuracy/len(test_data)*100:.2f}%)"
+                )
 
             history.append(metrics)
 

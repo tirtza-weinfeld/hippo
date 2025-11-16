@@ -170,7 +170,9 @@ def main() -> None:
         model_name = output_path.stem
 
         # Optional description
-        description = input("Model description (optional, press Enter to skip): ").strip()
+        description = input(
+            "Model description (optional, press Enter to skip): "
+        ).strip()
         if not description:
             hidden_sizes = "-".join(str(s) for s in args.sizes[1:-1])
             description = f"{hidden_sizes} hidden neurons, {args.activation} activation"
@@ -192,14 +194,16 @@ def main() -> None:
             if "readme" in uploaded:
                 print("✓ Uploaded README.md")
 
-            print(f"\n✓ Upload complete!")
+            print("\n✓ Upload complete!")
             print(f"View your model: https://huggingface.co/{repo_id}")
 
             # Prompt to update .env
             print("\n" + "=" * 50)
-            update_env = input(
-                f"Update DEFAULT_MODEL in .env to {model_name}? (y/n): "
-            ).strip().lower()
+            update_env = (
+                input(f"Update DEFAULT_MODEL in .env to {model_name}? (y/n): ")
+                .strip()
+                .lower()
+            )
 
             if update_env == "y":
                 env_path = Path(".env")

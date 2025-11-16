@@ -46,22 +46,19 @@ The API will be available at `http://localhost:8000`
 
 Visit `http://localhost:8000/docs` for interactive Swagger UI documentation.
 
-**For production deployment:** See [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) for Railway setup.
-
 ### Local Training
 
 ```bash
 # Train a new model
-python training/train_mnist.py \
+python training/cli_train.py \
     --sizes 784 100 10 \
     --activation relu \
     --epochs 30 \
-    --learning-rate 3.0
+    --learning-rate 0.01
 
 # Upload to Hugging Face Hub
-python training/upload_to_hf.py \
-    --model-path models/mnist-784-100-10-relu.npz \
-    --name "MNIST ReLU 95% accuracy" \
+python training/cli_upload.py \
+    --model-path models/mnist-relu-100.npz \
     --accuracy 95.4
 ```
 
@@ -71,45 +68,39 @@ See [`training/README.md`](training/README.md) for detailed training workflow.
 
 ```
 hippo/
-├── api/                        # Inference-only FastAPI
+├── api/                        # FastAPI application
 │   ├── main.py                 # App entry point
 │   └── routes/
-│       ├── inference.py        # Prediction & activations
-│       └── mnist.py            # MNIST samples
+│       ├── inference.py        # Neural network predictions & activations
+│       └── vocabulary.py       # Word/definition management
 │
 ├── training/                   # Local training scripts
-│   ├── train_mnist.py          # Train feedforward networks
-│   ├── upload_to_hf.py         # Upload models to HF Hub
-│   └── README.md               # Training guide
+│   ├── cli_train.py            # Train feedforward networks
+│   └── cli_upload.py           # Upload models to HF Hub
 │
-├── hf_hub/                     # HF Hub integration
+├── hf_hub/                     # HuggingFace Hub integration
 │   ├── model_manager.py        # Download & cache models
 │   └── config.py               # Configuration
 │
 ├── neural_networks/            # Core ML implementations
 │   ├── core.py                 # NeuralNetwork class
-│   └── mnist_loader.py         # MNIST utilities
+│   └── mnist_loader.py         # MNIST dataset utilities
 │
-├── schemas/                    # Pydantic models
-│   ├── inference.py            # API contracts
-│   └── mnist.py                # MNIST schemas
+├── schemas/                    # Pydantic models (API contracts)
+│   ├── inference.py            # Inference endpoints
+│   └── vocabulary.py           # Vocabulary endpoints
 │
-└── docs/
-    ├── ARCHITECTURE.md         # Architecture overview
-    ├── DEPLOYMENT.md           # Railway + HF Hub deployment
-    ├── TRAINING.md             # Training workflow
-    └── API.md                  # API documentation
+├── db/                         # Database models
+│   └── models/
+│       └── vocabulary.py       # SQLAlchemy models
+│
+└── docs/                       # Documentation
+    └── voc.md                  # Vocabulary database schema
 ```
 
 ## API Endpoints
 
-### Models
-
-#### List Available Models
-```http
-GET /models
-```
-Returns list of available models from Hugging Face Hub.
+**Full interactive documentation:** Visit `http://localhost:8000/docs` when server is running.
 
 ### Inference
 
@@ -132,7 +123,7 @@ Returns:
 }
 ```
 
-#### Get Activations (for Visualization)
+#### Get Activations
 ```http
 POST /activations
 Content-Type: application/json
@@ -142,15 +133,22 @@ Content-Type: application/json
 }
 ```
 
-Returns activations for all layers to visualize what each layer "sees".
+Returns activations for all layers (useful for visualization).
 
-### MNIST Samples
+### Vocabulary Management
 
-```http
-GET /mnist/samples?count=10&dataset=test
-```
+Full CRUD operations for words, definitions, examples, tags, and relationships.
 
-Get random MNIST samples for testing. Datasets: `train`, `validation`, `test`.
+**Main endpoints:**
+- `GET /vocabulary/words` - List all words
+- `POST /vocabulary/words` - Create new word
+- `GET /vocabulary/words/{id}` - Get word details
+- `PATCH /vocabulary/words/{id}` - Update word
+- `DELETE /vocabulary/words/{id}` - Delete word
+
+**Related endpoints:** `/vocabulary/definitions`, `/vocabulary/examples`, `/vocabulary/tags`, `/vocabulary/word-relations`
+
+See `/docs` for complete API reference.
 
 ## Neural Network Implementation
 
@@ -202,25 +200,6 @@ This project follows strict Python 3.14+ rules (see `.cursor/rules/python.mdc`):
 - `ruff` for linting/formatting
 - `mypy --strict` for type checking
 
-## Example Frontend Integration
-
-```javascript
-// 1. Get test samples
-const samples = await fetch('http://localhost:8000/mnist/samples?count=5')
-  .then(r => r.json());
-
-// 2. Make a prediction
-const prediction = await fetch('http://localhost:8000/predict', {
-  method: 'POST',
-  headers: {'Content-Type': 'application/json'},
-  body: JSON.stringify({pixels: samples.samples[0].pixels})
-}).then(r => r.json());
-
-console.log(`Predicted: ${prediction.predicted_digit}`);
-console.log(`Actual: ${samples.samples[0].label}`);
-console.log(`Confidence: ${prediction.confidence}`);
-```
-
 ## Environment Variables
 
 ```bash
@@ -237,36 +216,17 @@ ALLOWED_ORIGINS=http://localhost:3000      # CORS origins
 - [Original Reference Code](https://github.com/3b1b/videos/tree/master/_2017/nn)
 - [MNIST Dataset](http://yann.lecun.com/exdb/mnist/)
 
-## Next Steps
+## Development
 
-### For Learning
-1. Run local training scripts
-2. Experiment with different architectures
-3. Upload your best models to HF Hub
-4. Share your progress publicly
+### Database Migrations
 
-### For Frontend Development
-1. **Model Selection**: UI to choose from available models
-2. **Digit Drawing Canvas**: Let users draw digits for prediction
-3. **Activation Visualization**: Show what each layer activates on
-4. **Sample Gallery**: Display MNIST samples with predictions
+```bash
+# Create a new migration
+make migrate MSG='describe your changes'
 
-## Future Extensions
+# Apply migrations
+make upgrade
 
-The modular structure makes it easy to add new neural network types:
-
-```
-neural_networks/
-  ├── core.py              # Basic feedforward network ✓
-  ├── cnn.py               # Convolutional networks (future)
-  ├── rnn.py               # Recurrent networks (future)
-  └── gan.py               # Generative adversarial networks (future)
-```
-
-Each new network type gets its own route module:
-```
-api/routes/
-  ├── inference.py         # Basic feedforward ✓
-  ├── cnn.py               # CNN routes (future)
-  └── rnn.py               # RNN routes (future)
+# Rollback last migration
+make downgrade
 ```

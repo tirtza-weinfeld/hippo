@@ -6,6 +6,12 @@ python-dotenv==1.1.1
 numpy==2.2.0
 huggingface-hub==0.26.5
 
+# Database (for vocabulary feature)
+sqlalchemy>=2.0
+psycopg[binary]>=3.0
+pgvector
+alembic>=1.13.0
+
 # For learning/analysis (optional - only needed for Jupyter notebooks)
 jupyter==1.1.1
 matplotlib==3.10.0

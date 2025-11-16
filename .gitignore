@@ -28,3 +28,7 @@ models/
 
 # Logs
 logs/
+
+# Alembic
+# NOTE: Keep alembic/ directory and migration files in version control
+# Only ignore pycache (already covered by __pycache__/ above)
