@@ -94,6 +94,40 @@ def create_word(word: WordCreate, db: Session = Depends(get_db)) -> WordOut:
         ) from e
 
 
+@router.get("/words/search", response_model=list[WordOut])
+def search_words(
+    q: str = Query(..., min_length=1, description="Search query for word text"),
+    language: str | None = Query(None, description="Filter by language code"),
+    skip: int = Query(0, ge=0, description="Number of records to skip"),
+    limit: int = Query(
+        100, ge=1, le=1000, description="Maximum records to return (max 1000)"
+    ),
+    db: Session = Depends(get_db),
+) -> list[WordOut]:
+    """Search for words by text (case-insensitive partial match).
+
+    Args:
+        q: Search query string (required)
+        language: Optional language code filter
+        skip: Number of records to skip
+        limit: Maximum number of records to return
+        db: Database session
+
+    Returns:
+        List of matching words
+    """
+    try:
+        query = db.query(Word).filter(Word.word_text.ilike(f"%{q}%"))
+        if language:
+            query = query.filter(Word.language_code == language)
+        words = query.offset(skip).limit(limit).all()
+        return [WordOut.model_validate(w) for w in words]
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Failed to search words: {e}"
+        ) from e
+
+
 @router.get("/words", response_model=list[WordOut])
 def list_words(
     skip: int = Query(0, ge=0, description="Number of records to skip"),
@@ -653,7 +687,9 @@ def list_word_relations(
         ) from e
 
 
-@router.delete("/word-relations/{word_id_1}/{word_id_2}", status_code=204, response_model=None)
+@router.delete(
+    "/word-relations/{word_id_1}/{word_id_2}", status_code=204, response_model=None
+)
 def delete_word_relation(
     word_id_1: int,
     word_id_2: int,
