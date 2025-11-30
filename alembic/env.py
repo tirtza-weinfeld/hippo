@@ -18,7 +18,8 @@ database_url = os.getenv("DATABASE_URL")
 if database_url:
     config.set_main_option("sqlalchemy.url", database_url)
 else:
-    raise ValueError("DATABASE_URL environment variable not set")
+    msg = "DATABASE_URL environment variable not set"
+    raise ValueError(msg)
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
@@ -26,8 +27,8 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 # Import Base and all models for autogenerate support
-from db.base import Base
-from db.models import vocabulary  # noqa: F401 - imported for side effects
+from db.base import Base  # noqa: E402 - must import after config
+from db.models import dictionary  # noqa: E402, F401 - must import after config
 
 # Set target_metadata to Base.metadata for autogenerate
 target_metadata = Base.metadata
@@ -76,9 +77,7 @@ def run_migrations_online() -> None:
     )
 
     with connectable.connect() as connection:
-        context.configure(
-            connection=connection, target_metadata=target_metadata
-        )
+        context.configure(connection=connection, target_metadata=target_metadata)
 
         with context.begin_transaction():
             context.run_migrations()

@@ -1,17 +1,25 @@
 # Hippo Neural Network Project - Makefile
 
-.PHONY: help install train upload start test clean db-init migrate upgrade downgrade db-reset
+.PHONY: help install install-dev train upload start test clean db-init migrate upgrade downgrade db-reset seed format lint typecheck fix check
 
 # Default target
 help:
 	@echo "Hippo Neural Network Commands:"
 	@echo ""
 	@echo "  make install       Install dependencies"
+	@echo "  make install-dev   Install dev dependencies (notebooks, etc)"
 	@echo "  make train         Train a model (customize with ARGS)"
 	@echo "  make upload        Upload model to HF Hub (requires MODEL and ACC)"
 	@echo "  make start         Start API server"
-	@echo "  make test          Run tests"
+	@echo "  make test          Run tests with coverage"
 	@echo "  make clean         Clean cache and temporary files"
+	@echo ""
+	@echo "Code Quality Commands:"
+	@echo "  make format        Format code with ruff"
+	@echo "  make lint          Lint code with ruff (no fixes)"
+	@echo "  make typecheck     Type check with basedpyright"
+	@echo "  make fix           Auto-fix linting issues and format"
+	@echo "  make check         Run all checks (lint + typecheck + tests)"
 	@echo ""
 	@echo "Database Migration Commands:"
 	@echo "  make db-init       Initialize alembic (one-time setup)"
@@ -19,6 +27,7 @@ help:
 	@echo "  make upgrade       Apply migrations to database"
 	@echo "  make downgrade     Rollback last migration"
 	@echo "  make db-reset      Reset database (downgrade all, then upgrade)"
+	@echo "  make seed          Seed dictionary with vocabulary data (API must be running)"
 	@echo ""
 	@echo "Examples:"
 	@echo "  make train"
@@ -26,10 +35,16 @@ help:
 	@echo "  make upload MODEL=models/mnist-relu-100.npz ACC=95.4"
 	@echo "  make migrate MSG='add user authentication'"
 	@echo "  make upgrade"
+	@echo "  make fix           # Auto-fix and format code before committing"
+	@echo "  make check         # Run all quality checks"
 
 # Install dependencies
 install:
 	pip install -r requirements.txt
+
+# Install dev dependencies (notebooks, experiment tracking)
+install-dev:
+	pip install -r requirements-dev.txt
 
 # Train a model (default: 784-100-10 with ReLU)
 train:
@@ -80,9 +95,9 @@ start:
 start-port:
 	uvicorn api.main:app --reload --port $(PORT)
 
-# Run tests
+# Run tests with coverage
 test:
-	pytest tests/ -v
+	pytest
 
 # Clean cache and temporary files
 clean:
@@ -118,14 +133,44 @@ db-reset:
 	python3 -m alembic upgrade head
 	@echo "✓ Database reset complete"
 
-# Format code
+# Seed dictionary database (requires API to be running)
+seed:
+	python3 db/seeds/seed_data.py
+
+# Format code with ruff
 format:
-	ruff format .
+	@echo "🎨 Formatting code..."
+	@ruff format .
+	@echo "✓ Formatting complete"
 
-# Lint code
+# Lint code with ruff (check only, no fixes)
 lint:
-	ruff check .
+	@echo "🔍 Linting code..."
+	@ruff check .
+	@echo "✓ Lint check complete"
 
-# Type check
+# Type check with basedpyright (modern, faster alternative to mypy)
 typecheck:
-	mypy --strict neural_networks/ api/ training/ hf_hub/
+	@echo "🔎 Type checking..."
+	@basedpyright
+	@echo "✓ Type check complete"
+
+# Auto-fix linting issues and format code
+fix:
+	@echo "🔧 Auto-fixing lint issues..."
+	@ruff check . --fix --unsafe-fixes
+	@echo "🎨 Formatting code..."
+	@ruff format .
+	@echo "✓ Code fixed and formatted"
+
+# Run all quality checks (lint + typecheck + tests)
+check:
+	@echo "🚀 Running all quality checks..."
+	@echo ""
+	@$(MAKE) lint
+	@echo ""
+	@$(MAKE) typecheck
+	@echo ""
+	@$(MAKE) test
+	@echo ""
+	@echo "✅ All checks passed!"

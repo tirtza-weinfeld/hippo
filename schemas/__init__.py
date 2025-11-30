@@ -2,73 +2,62 @@
 
 Includes schemas for:
 - Inference: prediction and activation endpoints
-- Vocabulary: word, definition, example, tag, and relation models
+- Dictionary: word, definition, example, tag, and relation models
 """
 
 from schemas.common import HealthCheck
+from schemas.dictionary import (
+    DefinitionNested,
+    DefinitionOut,
+    ExampleBase,
+    ExampleOut,
+    PaginatedRelations,
+    PaginatedTags,
+    PaginatedWords,
+    RelationCreate,
+    RelationOut,
+    TagCreate,
+    TagOut,
+    TagUpdate,
+    WordCreate,
+    WordFull,
+    WordOut,
+    WordUpdate,
+)
 from schemas.inference import (
     ActivationsInput,
     ActivationsOutput,
     PredictionInput,
     PredictionOutput,
 )
-from schemas.vocabulary import (
-    DefinitionCreate,
-    DefinitionOut,
-    DefinitionUpdate,
-    DefinitionWithExamples,
-    ExampleCreate,
-    ExampleOut,
-    ExampleUpdate,
-    TagCreate,
-    TagOut,
-    TagUpdate,
-    TagWithWords,
-    WordCreate,
-    WordFull,
-    WordOut,
-    WordRelationCreate,
-    WordRelationOut,
-    WordTagCreate,
-    WordTagOut,
-    WordUpdate,
-    WordWithDefinitions,
-    WordWithTags,
-)
 
 __all__ = [
+    "ActivationsInput",
+    "ActivationsOutput",
+    # Dictionary - Definitions
+    "DefinitionNested",
+    "DefinitionOut",
+    # Dictionary - Examples
+    "ExampleBase",
+    "ExampleOut",
     # Common
     "HealthCheck",
+    "PaginatedRelations",
+    "PaginatedTags",
+    "PaginatedWords",
     # Inference
     "PredictionInput",
     "PredictionOutput",
-    "ActivationsInput",
-    "ActivationsOutput",
-    # Vocabulary - Words
-    "WordCreate",
-    "WordUpdate",
-    "WordOut",
-    "WordWithDefinitions",
-    "WordFull",
-    "WordWithTags",
-    # Vocabulary - Definitions
-    "DefinitionCreate",
-    "DefinitionUpdate",
-    "DefinitionOut",
-    "DefinitionWithExamples",
-    # Vocabulary - Examples
-    "ExampleCreate",
-    "ExampleUpdate",
-    "ExampleOut",
-    # Vocabulary - Relations
-    "WordRelationCreate",
-    "WordRelationOut",
-    # Vocabulary - Tags
+    # Dictionary - Relations
+    "RelationCreate",
+    "RelationOut",
+    # Dictionary - Tags
     "TagCreate",
-    "TagUpdate",
     "TagOut",
-    "TagWithWords",
-    # Vocabulary - Word-Tag Junction
-    "WordTagCreate",
-    "WordTagOut",
+    "TagUpdate",
+    # Dictionary - Words
+    "WordCreate",
+    "WordFull",
+    "WordOut",
+    "WordUpdate",
 ]

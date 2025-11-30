@@ -1,4 +1,4 @@
-"""Database package for vocabulary feature."""
+"""Database package for dictionary feature."""
 
 from __future__ import annotations
 

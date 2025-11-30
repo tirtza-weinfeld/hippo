@@ -1,28 +1,35 @@
-# Deployment Guide
+# Deployment Guide - Hippo Project
 
-This guide covers deploying Hippo to Railway with models stored on HuggingFace Hub.
+This guide documents how to deploy Hippo using our production stack: **Railway** (hosting) + **Neon** (PostgreSQL) + **HuggingFace Hub** (model storage).
 
-## Architecture Overview
+## Our Production Stack
 
 ```
-Local Machine          HuggingFace Hub         Railway (Production)
-─────────────          ───────────────         ─────────────────────
+Local Development      Cloud Services              Railway Production
+─────────────────      ──────────────              ──────────────────
 
-make train  ──────►   make upload  ──────►    API downloads
-(models/)             (HF Hub)                 (.hf_cache/)
-                                               │
-                                               ▼
-                                               In-memory network
-                                               (state.network)
+make train   ──────►   HuggingFace Hub   ──────►   API downloads
+(models/)              (model storage)              (.hf_cache/)
+                                                    │
+                                                    ▼
+                                                    In-memory network
+
+make migrate ──────►   Git (migrations)   ──────►  Neon PostgreSQL
+(alembic/)                                          (vocabulary data)
 ```
 
-**Key concept:** Training happens locally, models are stored on HuggingFace Hub, and Railway downloads models on startup.
+**How it works:**
+- Train models locally → Upload to HuggingFace Hub
+- Railway downloads models on startup (cached in `.hf_cache/`)
+- Neon PostgreSQL stores vocabulary data
+- Database migrations tracked in git, applied via Railway
 
 ## Prerequisites
 
-1. **Railway account** - Sign up at https://railway.app
-2. **HuggingFace account** - Sign up at https://huggingface.co
-3. **At least one trained model** - Run `make train` locally
+1. **Railway account** - https://railway.app
+2. **Neon account** - https://neon.tech
+3. **HuggingFace account** - https://huggingface.co
+4. **At least one trained model** - Run `make train` locally
 
 ## Step 1: Create HuggingFace Repository
 
@@ -32,24 +39,68 @@ make train  ──────►   make upload  ──────►    API do
 # Example: your-username/hippo-models
 ```
 
-## Step 2: Configure Environment
+## Step 2: Set Up Neon PostgreSQL
 
-Create `.env` file in project root:
+1. Go to https://neon.tech and create account
+2. Create new project (name it `hippo-db` or similar)
+3. **Neon automatically creates two branches:**
+   - `production` (default) - For Railway deployment
+   - `development` - For local development
+4. Copy connection strings from dashboard:
+   - Click on `production` branch → copy connection string
+   - Click on `development` branch → copy connection string
+5. **Important:** Change `postgresql://` to `postgresql+psycopg://`
+
+Example:
+```
+# Neon gives you:
+postgresql://user:pass@ep-xxx.neon.tech/neondb?sslmode=require
+
+# Change to:
+postgresql+psycopg://user:pass@ep-xxx.neon.tech/neondb?sslmode=require
+```
+
+**Why use branches?**
+- ✅ Isolates local development from production data
+- ✅ Safe to test migrations and data changes locally
+- ✅ Easy to reset development branch if needed
+- ✅ Same database engine in both environments
+
+## Step 3: Configure Local Environment
+
+Create `.env` file in project root (or use `.env.example` as template):
 
 ```bash
-# Required
+# Database (Required) - Use DEVELOPMENT branch for local work
+DATABASE_URL=postgresql+psycopg://user:pass@ep-dev-endpoint.neon.tech/neondb?sslmode=require
+
+# HuggingFace Hub (Required)
 HF_MODEL_REPO=your-username/hippo-models
 DEFAULT_MODEL=mnist-relu-100
 
-# Optional (only for private repos)
+# Optional (only for private HF repos)
 HUGGINGFACE_TOKEN=hf_your_token_here
+
+# CORS Origins (Production URLs)
+ALLOWED_ORIGINS=https://your-frontend.com,http://localhost:3000
 
 # Optional
 HF_CACHE_DIR=.hf_cache
-ALLOWED_ORIGINS=https://your-frontend.com
 ```
 
-## Step 3: Train and Upload First Model
+**See `.env.example` for all available variables.**
+
+## Step 4: Run Database Migrations (Local)
+
+```bash
+# Apply migrations to create vocabulary tables
+make upgrade
+
+# Verify database tables were created
+# Check your Neon dashboard or connect with psql
+```
+
+## Step 5: Train and Upload First Model
 
 ```bash
 # Train a model
@@ -61,7 +112,7 @@ make upload MODEL=models/mnist-relu-100-TIMESTAMP.npz ACC=95.4
 
 **Note:** After upload, local files are automatically deleted. HuggingFace Hub becomes the source of truth.
 
-## Step 4: Deploy to Railway
+## Step 6: Deploy to Railway
 
 ### Install Railway CLI
 
@@ -84,24 +135,42 @@ railway up
 
 ### Configure Environment Variables in Railway
 
-Go to Railway dashboard and set:
+Go to Railway dashboard → Variables tab and set all variables:
 
 ```bash
-# Required
+# Database (Neon PRODUCTION branch connection string)
+DATABASE_URL=postgresql+psycopg://user:pass@ep-prod-endpoint.neon.tech/neondb?sslmode=require
+
+# HuggingFace Hub
 HF_MODEL_REPO=your-username/hippo-models
-DEFAULT_MODEL=mnist-relu-100
+DEFAULT_MODEL=your-model-name
 
 # Optional (for private HF repos)
 HUGGINGFACE_TOKEN=hf_...
 
+# Production CORS (your frontend URLs)
+ALLOWED_ORIGINS=https://your-frontend.vercel.app
+
 # Optional
 HF_CACHE_DIR=.hf_cache
-ALLOWED_ORIGINS=https://your-frontend.com
 ```
 
-**Note:** `DATABASE_URL` is auto-provided by Railway if you add a PostgreSQL service.
+**Note:** Copy the exact `DATABASE_URL` from your Neon dashboard. Railway will use this to connect to your Neon database.
 
-## Step 5: Verify Deployment
+### Run Database Migrations on Railway
+
+After first deployment, run migrations:
+
+```bash
+# Option 1: Railway CLI
+railway run alembic upgrade head
+
+# Option 2: Railway dashboard
+# Go to Deployments → Settings → Add "Deploy Command"
+# Command: alembic upgrade head
+```
+
+## Step 7: Verify Deployment
 
 ### Check Health Endpoint
 
@@ -113,9 +182,15 @@ Expected response:
 ```json
 {
   "status": "healthy",
-  "network_loaded": true
+  "network_loaded": true,
+  "database_connected": true
 }
 ```
+
+**What the health check verifies:**
+- `status: "healthy"` - API is running
+- `network_loaded: true` - ML model loaded from HuggingFace Hub
+- `database_connected: true` - PostgreSQL database is accessible
 
 ### Test Prediction Endpoint
 
@@ -201,16 +276,78 @@ async def lifespan(app: FastAPI):
 
 Before going live:
 
+**Database:**
+- [ ] PostgreSQL database created (Neon or Railway)
+- [ ] `DATABASE_URL` environment variable set
+- [ ] Database migrations run (`alembic upgrade head`)
+- [ ] Health endpoint returns `database_connected: true`
+
+**ML Models:**
 - [ ] At least one model uploaded to HuggingFace Hub
-- [ ] Railway environment variables configured
 - [ ] `HF_MODEL_REPO` and `DEFAULT_MODEL` set correctly
 - [ ] `HUGGINGFACE_TOKEN` set (if using private repo)
-- [ ] CORS `ALLOWED_ORIGINS` configured for frontend
 - [ ] Health endpoint returns `network_loaded: true`
 - [ ] Test `/predict` endpoint with sample data
 - [ ] Test `/activations` endpoint with sample data
 
+**API Configuration:**
+- [ ] Railway environment variables configured
+- [ ] CORS `ALLOWED_ORIGINS` configured for frontend URLs
+- [ ] Test `/healthz` endpoint - all checks pass
+- [ ] Visit `/docs` - Swagger UI loads correctly
+- [ ] Test vocabulary endpoints (if using database features)
+
 ## Troubleshooting
+
+### "Database connection failed" (`database_connected: false`)
+
+**Common causes with Neon:**
+
+1. **Wrong connection string format**
+   ```bash
+   # ❌ Wrong (missing +psycopg)
+   postgresql://user:pass@ep-xxx.neon.tech/neondb
+
+   # ✅ Correct
+   postgresql+psycopg://user:pass@ep-xxx.neon.tech/neondb?sslmode=require
+   ```
+
+2. **Neon database auto-suspended** (free tier)
+   - Visit Neon dashboard to wake it up
+   - First request after suspension may be slow
+
+3. **Missing sslmode parameter**
+   - Neon requires `?sslmode=require`
+
+**Fix it:**
+```bash
+# Check Railway logs
+railway logs
+
+# Test connection locally
+python -c "from db import engine; engine.connect()"
+
+# Verify DATABASE_URL in Railway Variables tab
+# Should match your Neon connection string exactly
+```
+
+### "Tables don't exist" errors
+
+**Causes:**
+- Database migrations not run
+- Migrations run on wrong database
+
+**Solutions:**
+```bash
+# Run migrations on Railway
+railway run alembic upgrade head
+
+# Verify migrations were applied
+railway run python -c "from sqlalchemy import inspect, text; from db import engine; inspector = inspect(engine); print(inspector.get_table_names())"
+
+# Check migration history
+railway run alembic current
+```
 
 ### "Failed to load model from HF Hub"
 
@@ -295,10 +432,18 @@ railway logs
 cp .env.example .env
 
 # Edit .env with your settings
+# IMPORTANT: Use Neon DEVELOPMENT branch for DATABASE_URL
+DATABASE_URL=postgresql+psycopg://...@ep-dev-endpoint.neon.tech/neondb...
 HF_MODEL_REPO=your-username/hippo-models
 DEFAULT_MODEL=mnist-relu-100
 HUGGINGFACE_TOKEN=hf_...  # Optional
 ```
+
+**Database Isolation:**
+- ✅ Local `.env` uses Neon `development` branch
+- ✅ Railway uses Neon `production` branch (set in Railway dashboard)
+- ✅ No manual switching needed - automatic based on environment
+- ✅ `.env` is gitignored and never deployed to Railway
 
 ### Run Locally
 
@@ -335,7 +480,7 @@ railway up
 
 ## Deployment URL
 
-**Production:** https://hippo.up.railway.app
+**Production:** https://your-app.up.railway.app
 
 **Endpoints:**
 - `GET /healthz` - Health check

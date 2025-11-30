@@ -3,10 +3,11 @@
 Modern Python 3.14+ implementation with NumPy for learning purposes.
 """
 
+import itertools
 from typing import Literal
+
 import numpy as np
 import numpy.typing as npt
-
 
 NDArrayFloat = npt.NDArray[np.floating]
 
@@ -36,7 +37,8 @@ class NeuralNetwork:
             ValueError: If sizes has fewer than 2 layers
         """
         if len(sizes) < 2:
-            raise ValueError("Network must have at least 2 layers")
+            msg = "Network must have at least 2 layers"
+            raise ValueError(msg)
 
         self.num_layers: int = len(sizes)
         self.sizes: list[int] = sizes
@@ -50,7 +52,7 @@ class NeuralNetwork:
         # Initialize weights with Gaussian distribution
         self.weights: list[NDArrayFloat] = [
             np.random.randn(y, x).astype(np.float64)
-            for x, y in zip(sizes[:-1], sizes[1:])
+            for x, y in itertools.pairwise(sizes)
         ]
 
     def feedforward(self, a: NDArrayFloat) -> NDArrayFloat:
@@ -62,7 +64,7 @@ class NeuralNetwork:
         Returns:
             Output activations (m, 1) where m is output layer size
         """
-        for b, w in zip(self.biases, self.weights):
+        for b, w in zip(self.biases, self.weights, strict=False):
             z = w @ a + b
             a = self._activation(z)
         return a
@@ -77,7 +79,7 @@ class NeuralNetwork:
             List of activation arrays for each layer
         """
         activations: list[NDArrayFloat] = [a]
-        for b, w in zip(self.biases, self.weights):
+        for b, w in zip(self.biases, self.weights, strict=False):
             z = w @ activations[-1] + b
             a = self._activation(z)
             activations.append(a)
@@ -124,9 +126,6 @@ class NeuralNetwork:
                 accuracy = self.evaluate(test_data)
                 metrics["test_accuracy"] = accuracy
                 metrics["test_total"] = len(test_data)
-                print(
-                    f"Epoch {epoch + 1}/{epochs}: {accuracy}/{len(test_data)} correct ({accuracy/len(test_data)*100:.2f}%)"
-                )
 
             history.append(metrics)
 
@@ -164,13 +163,21 @@ class NeuralNetwork:
         # Accumulate gradients across mini-batch
         for x, y in mini_batch:
             delta_nabla_b, delta_nabla_w = self._backprop(x, y)
-            nabla_b = [nb + dnb for nb, dnb in zip(nabla_b, delta_nabla_b)]
-            nabla_w = [nw + dnw for nw, dnw in zip(nabla_w, delta_nabla_w)]
+            nabla_b = [
+                nb + dnb for nb, dnb in zip(nabla_b, delta_nabla_b, strict=False)
+            ]
+            nabla_w = [
+                nw + dnw for nw, dnw in zip(nabla_w, delta_nabla_w, strict=False)
+            ]
 
         # Update weights and biases
         eta_over_m = learning_rate / len(mini_batch)
-        self.weights = [w - eta_over_m * nw for w, nw in zip(self.weights, nabla_w)]
-        self.biases = [b - eta_over_m * nb for b, nb in zip(self.biases, nabla_b)]
+        self.weights = [
+            w - eta_over_m * nw for w, nw in zip(self.weights, nabla_w, strict=False)
+        ]
+        self.biases = [
+            b - eta_over_m * nb for b, nb in zip(self.biases, nabla_b, strict=False)
+        ]
 
     def _backprop(
         self,
@@ -194,7 +201,7 @@ class NeuralNetwork:
         activations: list[NDArrayFloat] = [x]
         zs: list[NDArrayFloat] = []
 
-        for b, w in zip(self.biases, self.weights):
+        for b, w in zip(self.biases, self.weights, strict=False):
             z = w @ activation + b
             zs.append(z)
             activation = self._activation(z)
@@ -291,15 +298,18 @@ class NeuralNetwork:
             ValueError: If data format is invalid
         """
         if not isinstance(data.get("sizes"), list):
-            raise ValueError("Missing or invalid 'sizes' field")
+            msg = "Missing or invalid 'sizes' field"
+            raise TypeError(msg)
         if not isinstance(data.get("activation"), str):
-            raise ValueError("Missing or invalid 'activation' field")
+            msg = "Missing or invalid 'activation' field"
+            raise TypeError(msg)
 
         sizes: list[int] = data["sizes"]  # type: ignore[assignment]
         activation: str = data["activation"]  # type: ignore[assignment]
 
         if activation not in ("sigmoid", "relu"):
-            raise ValueError(f"Invalid activation: {activation}")
+            msg = f"Invalid activation: {activation}"
+            raise ValueError(msg)
 
         network = cls(sizes, activation)  # type: ignore[arg-type]
 

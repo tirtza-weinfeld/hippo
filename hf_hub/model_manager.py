@@ -102,7 +102,7 @@ class ModelManager:
             Exception: If model cannot be loaded
         """
         # Download model files (uses cache if available)
-        model_path, metadata_path = self.download_model(model_name)
+        model_path, _metadata_path = self.download_model(model_name)
 
         # Load model data
         data = np.load(model_path)
@@ -117,16 +117,14 @@ class ModelManager:
         biases = [data[f"bias_{i}"] for i in range(num_layers - 1)]
 
         # Create network with loaded parameters
-        network_dict = {
+        network_dict: dict[str, object] = {
             "sizes": sizes,
             "activation": activation,
             "weights": weights,
             "biases": biases,
         }
 
-        network = NeuralNetwork.from_dict(network_dict)
-
-        return network
+        return NeuralNetwork.from_dict(network_dict)
 
     def get_model_info(self, model_name: str) -> dict[str, Any]:
         """Get model metadata without loading the full model.

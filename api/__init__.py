@@ -1,6 +1,6 @@
-"""FastAPI application providing neural network inference and vocabulary management.
+"""FastAPI application providing neural network inference and dictionary management.
 
 Routes:
 - /predict, /activations - Neural network inference endpoints
-- /vocabulary/* - Word, definition, example, and tag management
+- /dictionary/* - Word, definition, example, and tag management
 """

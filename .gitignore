@@ -25,9 +25,16 @@ __pycache__/
 # Jupyter
 .ipynb_checkpoints/
 *.ipynb
+notebooks/  # Exclude entire notebooks directory (experiments only)
 
 # Logs
 logs/
+
+# Generated files
+*.wav
+*.abc
+training_checkpoints/
+*_ckpt
 
 # Alembic
 # NOTE: Keep alembic/ directory and migration files in version control

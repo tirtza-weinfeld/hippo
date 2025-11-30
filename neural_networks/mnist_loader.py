@@ -3,19 +3,17 @@
 Downloads and processes MNIST handwritten digit dataset.
 """
 
-from pathlib import Path
 import gzip
 import pickle
-from typing import TypeAlias
 import urllib.request
+from pathlib import Path
 
 import numpy as np
 import numpy.typing as npt
 
-
 NDArrayFloat = npt.NDArray[np.floating]
 NDArrayInt = npt.NDArray[np.int_]
-DataPair: TypeAlias = tuple[NDArrayFloat, NDArrayFloat]
+type DataPair = tuple[NDArrayFloat, NDArrayFloat]
 
 
 class MNISTLoader:
@@ -48,7 +46,8 @@ class MNISTLoader:
                     f, encoding="latin1"
                 )
         except Exception as e:
-            raise RuntimeError(f"Failed to load MNIST data: {e}") from e
+            msg = f"Failed to load MNIST data: {e}"
+            raise RuntimeError(msg) from e
 
         return (
             cls._format_training_data(training_data),
@@ -68,7 +67,8 @@ class MNISTLoader:
         try:
             urllib.request.urlretrieve(cls.MNIST_URL, cls.MNIST_FILE)
         except Exception as e:
-            raise RuntimeError(f"Failed to download MNIST: {e}") from e
+            msg = f"Failed to download MNIST: {e}"
+            raise RuntimeError(msg) from e
 
     @staticmethod
     def _format_training_data(
@@ -85,7 +85,7 @@ class MNISTLoader:
         inputs, labels = data
         formatted_inputs = [np.reshape(x, (784, 1)).astype(np.float64) for x in inputs]
         formatted_labels = [_vectorize_label(y) for y in labels]
-        return list(zip(formatted_inputs, formatted_labels))
+        return list(zip(formatted_inputs, formatted_labels, strict=False))
 
     @staticmethod
     def _format_test_data(
@@ -102,7 +102,7 @@ class MNISTLoader:
         inputs, labels = data
         formatted_inputs = [np.reshape(x, (784, 1)).astype(np.float64) for x in inputs]
         formatted_labels = [_vectorize_label(y) for y in labels]
-        return list(zip(formatted_inputs, formatted_labels))
+        return list(zip(formatted_inputs, formatted_labels, strict=False))
 
 
 def _vectorize_label(j: int) -> NDArrayFloat:

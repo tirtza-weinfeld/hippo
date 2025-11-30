@@ -1,8 +1,8 @@
-"""SQLAlchemy models for vocabulary database."""
+"""SQLAlchemy models for dictionary database."""
 
 from __future__ import annotations
 
-from db.models.vocabulary import (
+from db.models.dictionary import (
     Definition,
     Example,
     Tag,
@@ -11,4 +11,4 @@ from db.models.vocabulary import (
     WordTag,
 )
 
-__all__ = ["Word", "Definition", "Example", "WordRelation", "Tag", "WordTag"]
+__all__ = ["Definition", "Example", "Tag", "Word", "WordRelation", "WordTag"]

@@ -15,10 +15,11 @@
    - ALWAYS use type hints on every function
    - NEVER use `Union`, `Optional`, `List`, `Dict` - use `|`, `list[]`, `dict[]`
    - USE `def func[T](items: list[T]) -> T:` for generics
-   - RUN `mypy --strict` before claiming code is complete
+   - RUN `make typecheck` before claiming code is complete
 
 3. **Code Quality - MANDATORY:**
-   - RUN `ruff check . && ruff format .` on all Python files
+   - RUN `make fix` to auto-fix linting issues and format code
+   - RUN `make check` to verify all quality checks pass
    - Fix ALL type errors before committing
    - NO bare `except:` statements
    - NO wildcard imports
@@ -37,11 +38,18 @@
 
 Before considering any Python code complete, verify:
 - [ ] All functions have type hints
-- [ ] `ruff check .` passes with no errors
-- [ ] `mypy --strict .` passes with no errors
+- [ ] `make lint` passes with no errors
+- [ ] `make typecheck` passes with no errors
+- [ ] `make test` passes all tests
 - [ ] No anti-patterns from rules file present
 - [ ] All imports are explicit (no wildcards)
 - [ ] Using modern Python 3.14+ syntax
+
+**Quick workflow:**
+1. Write code following `.cursor/rules/python.mdc`
+2. Run `make fix` to auto-fix and format
+3. Run `make check` to verify everything passes
+4. Commit if all checks pass
 
 ### If Rules Conflict
 

@@ -1,0 +1,483 @@
+[
+  {
+    "word_text": "defame",
+    "language_code": "en",
+    "tags": ["wicked", "musical", "theater"],
+    "word_forms": [
+      { "form_text": "defaming" },
+      { "form_text": "defamed" },
+      { "form_text": "defames" }
+    ],
+    "definitions": [
+      {
+        "order": 0,
+        "definition_text": "To harm someone's reputation by saying or writing false things.",
+        "part_of_speech": "verb",
+        "examples": [
+          {
+            "example_text": "Defaming our poor Wizard",
+            "source": "Wicked - Thank Goodness"
+          },
+          {
+            "example_text": "The article was accused of trying to defame several officials."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "word_text": "calumny",
+    "language_code": "en",
+    "tags": ["wicked", "musical", "theater"],
+    "word_forms": [
+      { "form_text": "calumnies" }
+    ],
+    "definitions": [
+      {
+        "order": 0,
+        "definition_text": "A false and harmful statement made to damage someone's reputation.",
+        "part_of_speech": "noun",
+        "examples": [
+          {
+            "example_text": "With her calumnies and lies",
+            "source": "Wicked - Thank Goodness"
+          },
+          {
+            "example_text": "He spent years answering the calumny spread about him."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "word_text": "hex",
+    "language_code": "en",
+    "tags": ["wicked", "musical", "theater"],
+    "word_forms": [
+      { "form_text": "hexed" },
+      { "form_text": "hexes" },
+      { "form_text": "hexing" }
+    ],
+    "definitions": [
+      {
+        "order": 0,
+        "definition_text": "To put a curse or evil spell on someone or something.",
+        "part_of_speech": "verb",
+        "examples": [
+          {
+            "example_text": "Shield us so we won't be hexed",
+            "source": "Wicked - Thank Goodness"
+          },
+          {
+            "example_text": "They joked that the team had been hexed after losing every match."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "word_text": "fairy-tale",
+    "language_code": "en",
+    "tags": ["wicked", "musical", "theater"],
+    "word_forms": [
+      { "form_text": "fairy tales" },
+      { "form_text": "fairy-tales" }
+    ],
+    "definitions": [
+      {
+        "order": 0,
+        "definition_text": "Seeming magical, perfect, or unrealistically ideal, like a traditional fantasy story.",
+        "part_of_speech": "adjective",
+        "examples": [
+          {
+            "example_text": "A fairy-tale plot",
+            "source": "Wicked - Thank Goodness"
+          },
+          {
+            "example_text": "They dreamed of a fairy-tale life in a cottage by the sea."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "word_text": "vicarious",
+    "language_code": "en",
+    "tags": ["wicked", "musical", "theater"],
+    "word_forms": [
+      { "form_text": "vicariously" }
+    ],
+    "definitions": [
+      {
+        "order": 0,
+        "definition_text": "Experienced through the feelings or actions of another person, rather than directly.",
+        "part_of_speech": "adjective",
+        "examples": [
+          {
+            "example_text": "Our ending vicariously with all of you",
+            "source": "Wicked - Thank Goodness"
+          },
+          {
+            "example_text": "She took vicarious pleasure in her friend's success."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "word_text": "strive",
+    "language_code": "en",
+    "tags": ["wicked", "musical", "theater"],
+    "word_forms": [
+      { "form_text": "striven" },
+      { "form_text": "strives" },
+      { "form_text": "strove" },
+      { "form_text": "striving" }
+    ],
+    "definitions": [
+      {
+        "order": 0,
+        "definition_text": "To make a great effort to achieve or obtain something.",
+        "part_of_speech": "verb",
+        "examples": [
+          {
+            "example_text": "I have striven to ensure that all of Oz knows the story",
+            "source": "Wicked - Thank Goodness"
+          },
+          {
+            "example_text": "They continue to strive for higher standards in their work."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "word_text": "summon",
+    "language_code": "en",
+    "tags": ["wicked", "musical", "theater"],
+    "word_forms": [
+      { "form_text": "summoned" },
+      { "form_text": "summons" },
+      { "form_text": "summoning" }
+    ],
+    "definitions": [
+      {
+        "order": 0,
+        "definition_text": "To formally call someone to come, especially for a meeting or official purpose.",
+        "part_of_speech": "verb",
+        "examples": [
+          {
+            "example_text": "The day you were first summoned",
+            "source": "Wicked - Thank Goodness"
+          },
+          {
+            "example_text": "She was summoned to appear before the committee."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "word_text": "decree",
+    "language_code": "en",
+    "tags": ["wicked", "musical", "theater"],
+    "word_forms": [
+      { "form_text": "decreed" },
+      { "form_text": "decrees" },
+      { "form_text": "decreeing" }
+    ],
+    "definitions": [
+      {
+        "order": 0,
+        "definition_text": "To order or decide something officially, especially by law or authority.",
+        "part_of_speech": "verb",
+        "examples": [
+          {
+            "example_text": "He decreed you'd hence be known as Glinda the Good",
+            "source": "Wicked - Thank Goodness"
+          },
+          {
+            "example_text": "The government decreed new rules on workplace safety."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "word_text": "concealment",
+    "language_code": "en",
+    "tags": ["wicked", "musical", "theater"],
+    "word_forms": [
+      { "form_text": "concealments" }
+    ],
+    "definitions": [
+      {
+        "order": 0,
+        "definition_text": "The act of hiding something or keeping it secret.",
+        "part_of_speech": "noun",
+        "examples": [
+          {
+            "example_text": "The Wicked Witch burst from concealment",
+            "source": "Wicked - Thank Goodness"
+          },
+          {
+            "example_text": "The money had been placed in careful concealment behind a panel."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "word_text": "lurk",
+    "language_code": "en",
+    "tags": ["wicked", "musical", "theater"],
+    "word_forms": [
+      { "form_text": "lurking" },
+      { "form_text": "lurks" },
+      { "form_text": "lurked" }
+    ],
+    "definitions": [
+      {
+        "order": 0,
+        "definition_text": "To stay hidden, often in order to watch or wait for something.",
+        "part_of_speech": "verb",
+        "examples": [
+          {
+            "example_text": "Where she had been lurking, surrpetitially!",
+            "source": "Wicked - Thank Goodness"
+          },
+          {
+            "example_text": "Someone seemed to be lurking just outside the door."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "word_text": "surreptitious",
+    "language_code": "en",
+    "tags": ["wicked", "musical", "theater"],
+    "word_forms": [
+      { "form_text": "surreptitiously" }
+    ],
+    "definitions": [
+      {
+        "order": 0,
+        "definition_text": "Done in a secret or hidden way, especially to avoid notice.",
+        "part_of_speech": "adjective",
+        "examples": [
+          {
+            "example_text": "Where she had been lurking, surrpetitially!",
+            "source": "Wicked - Thank Goodness"
+          },
+          {
+            "example_text": "They held a surreptitious meeting late at night."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "word_text": "rebel",
+    "language_code": "en",
+    "tags": ["wicked", "musical", "theater"],
+    "word_forms": [
+      { "form_text": "rebels" },
+      { "form_text": "rebelled" },
+      { "form_text": "rebelling" }
+    ],
+    "definitions": [
+      {
+        "order": 0,
+        "definition_text": "A person who opposes or fights against a government, ruler, or authority.",
+        "part_of_speech": "noun",
+        "examples": [
+          {
+            "example_text": "Some rebel animals are giving her food and shelter",
+            "source": "Wicked - Thank Goodness"
+          },
+          {
+            "example_text": "The rebels refused to accept the peace agreement."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "word_text": "unclean",
+    "language_code": "en",
+    "tags": ["wicked", "musical", "theater"],
+    "word_forms": [
+      { "form_text": "uncleaner" },
+      { "form_text": "uncleanest" }
+    ],
+    "definitions": [
+      {
+        "order": 0,
+        "definition_text": "Considered morally impure or not acceptable by a religious or moral standard.",
+        "part_of_speech": "adjective",
+        "examples": [
+          {
+            "example_text": "I hear her soul is so unclean",
+            "source": "Wicked - Thank Goodness"
+          },
+          {
+            "example_text": "Certain foods were traditionally regarded as unclean."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "word_text": "refreshment",
+    "language_code": "en",
+    "tags": ["wicked", "musical", "theater"],
+    "word_forms": [
+      { "form_text": "refreshments" }
+    ],
+    "definitions": [
+      {
+        "order": 0,
+        "definition_text": "A light drink or snack that helps you feel less tired or thirsty.",
+        "part_of_speech": "noun",
+        "examples": [
+          {
+            "example_text": "He's gone to fetch me a refreshment",
+            "source": "Wicked - Thank Goodness"
+          },
+          {
+            "example_text": "Tea and light refreshments were served after the talk."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "word_text": "anticipate",
+    "language_code": "en",
+    "tags": ["wicked", "musical", "theater"],
+    "word_forms": [
+      { "form_text": "anticipated" },
+      { "form_text": "anticipates" },
+      { "form_text": "anticipating" }
+    ],
+    "definitions": [
+      {
+        "order": 0,
+        "definition_text": "To expect something to happen or to look forward to it.",
+        "part_of_speech": "verb",
+        "examples": [
+          {
+            "example_text": "Unlike I anticipated",
+            "source": "Wicked - Thank Goodness"
+          },
+          {
+            "example_text": "They anticipated a large crowd at the opening."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "word_text": "finale",
+    "language_code": "en",
+    "tags": ["wicked", "musical", "theater"],
+    "word_forms": [
+      { "form_text": "finales" }
+    ],
+    "definitions": [
+      {
+        "order": 0,
+        "definition_text": "The last and often most exciting part of a performance or event.",
+        "part_of_speech": "noun",
+        "examples": [
+          {
+            "example_text": "With this perfect finale",
+            "source": "Wicked - Thank Goodness"
+          },
+          {
+            "example_text": "The show ended with a spectacular finale of music and lights."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "word_text": "ballyhoo",
+    "language_code": "en",
+    "tags": ["wicked", "musical", "theater"],
+    "word_forms": [
+      { "form_text": "ballyhoos" },
+      { "form_text": "ballyhooed" },
+      { "form_text": "ballyhooing" }
+    ],
+    "definitions": [
+      {
+        "order": 0,
+        "definition_text": "Loud or exaggerated publicity or fuss.",
+        "part_of_speech": "noun",
+        "examples": [
+          {
+            "example_text": "The cheers and ballyhoo",
+            "source": "Wicked - Thank Goodness"
+          },
+          {
+            "example_text": "The new gadget arrived with plenty of media ballyhoo."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "word_text": "frank",
+    "language_code": "en",
+    "tags": ["wicked", "musical", "theater"],
+    "word_forms": [
+      { "form_text": "franker" },
+      { "form_text": "frankest" },
+      { "form_text": "frankly" }
+    ],
+    "definitions": [
+      {
+        "order": 0,
+        "definition_text": "Honest and direct, sometimes in a way that may seem too plain.",
+        "part_of_speech": "adjective",
+        "examples": [
+          {
+            "example_text": "If we may be so frank",
+            "source": "Wicked - Thank Goodness"
+          },
+          {
+            "example_text": "She was frank about the difficulties they faced."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "word_text": "fiancé",
+    "language_code": "en",
+    "tags": ["wicked", "musical", "theater"],
+    "word_forms": [
+      { "form_text": "fiancés" },
+      { "form_text": "fiancee" },
+      { "form_text": "fiancées" }
+    ],
+    "definitions": [
+      {
+        "order": 0,
+        "definition_text": "A man who is engaged to be married.",
+        "part_of_speech": "noun",
+        "examples": [
+          {
+            "example_text": "And fiancé!",
+            "source": "Wicked - Thank Goodness"
+          },
+          {
+            "example_text": "She introduced her fiancé to her friends at the party."
+          }
+        ]
+      }
+    ]
+  }
+]

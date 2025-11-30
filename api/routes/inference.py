@@ -11,8 +11,7 @@ from schemas.inference import (
     PredictionOutput,
 )
 
-
-router = APIRouter(tags=["inference"])
+router = APIRouter(prefix="/v1", tags=["inference"])
 
 
 @router.post("/predict", response_model=PredictionOutput)

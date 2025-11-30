@@ -4,8 +4,9 @@ Clean, importable functions without CLI dependencies.
 """
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any, cast
 
 import numpy as np
 from huggingface_hub import HfApi, create_repo
@@ -70,8 +71,8 @@ def create_model_card(
     Returns:
         Model card markdown content
     """
-    arch = metadata["architecture"]
-    training = metadata.get("training", {})
+    arch = cast(dict[str, Any], metadata["architecture"])
+    training = cast(dict[str, Any], metadata.get("training", {}))
 
     sizes_str = " → ".join(str(s) for s in arch["sizes"])
 
@@ -91,9 +92,9 @@ def create_model_card(
 """
 
     if training:
-        card += f"""- **Epochs**: {training.get('epochs', 'N/A')}
-- **Learning Rate**: {training.get('learning_rate', 'N/A')}
-- **Mini-batch Size**: {training.get('mini_batch_size', 'N/A')}
+        card += f"""- **Epochs**: {training.get("epochs", "N/A")}
+- **Learning Rate**: {training.get("learning_rate", "N/A")}
+- **Mini-batch Size**: {training.get("mini_batch_size", "N/A")}
 """
 
     card += f"""
@@ -121,7 +122,7 @@ network = manager.load_model("{model_name}")
 
 ## Created
 
-{datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")}
+{datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S UTC")}
 """
 
     return card
@@ -153,7 +154,8 @@ def upload_model_to_hub(
         Exception: If upload fails
     """
     if not model_path.exists():
-        raise FileNotFoundError(f"Model file not found: {model_path}")
+        msg = f"Model file not found: {model_path}"
+        raise FileNotFoundError(msg)
 
     # Load model metadata
     metadata = load_model_metadata(model_path)
@@ -163,7 +165,7 @@ def upload_model_to_hub(
         "name": model_name,
         "description": description,
         **metadata,
-        "created_at": datetime.now(timezone.utc).isoformat(),
+        "created_at": datetime.now(UTC).isoformat(),
     }
 
     if accuracy is not None:

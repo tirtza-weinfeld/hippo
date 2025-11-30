@@ -1,0 +1,15 @@
+[lint]
+# Ignore security warnings for training/ML code
+ignore = [
+    "S301",  # pickle usage (needed for MNIST data)
+    "S310",  # URL open (needed for downloading MNIST)
+    "S607",  # subprocess with partial path (make command is fine)
+    "S110",  # try-except-pass (acceptable in some cases)
+    "PLR0915",  # too many statements (CLI functions can be long)
+    "PLR2004",  # magic values (acceptable for ML code)
+    "PLC0415",  # imports not at top-level (needed to avoid circular imports)
+    "PTH123",  # open() instead of Path.open() (both are fine)
+    "ARG001",  # unused arguments (pytest fixtures)
+    "N806",  # variable naming (SessionLocal is a common pattern)
+    "DTZ005",  # datetime without timezone (not needed for file timestamps)
+]

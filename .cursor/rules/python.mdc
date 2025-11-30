@@ -80,11 +80,13 @@ alwaysApply: true
 
 ## Code Quality - MANDATORY
 
-* RUN `ruff check . && ruff format .` before every commit
-* RUN `mypy --strict .` before every commit
+* RUN `make lint` before every commit (NEVER call ruff/mypy directly)
+* RUN `make fix` to auto-fix linting issues
+* RUN `make check` to verify all quality checks pass
 * USE `ruff` (NEVER `black`, `flake8`, `isort` separately)
 * SET line length: 100 characters
 * USE pre-commit hooks with `ruff`, `mypy`, `bandit`
+* ALWAYS use project Makefile commands instead of direct tool invocation
 
 ## Testing - MANDATORY
 
@@ -129,6 +131,17 @@ alwaysApply: true
 * CONFIGURE structured logging with JSON in production
 * USE `logger.exception()` in except blocks
 * SET appropriate log levels: DEBUG, INFO, WARNING, ERROR, CRITICAL
+
+## FastAPI - MANDATORY
+
+* DELETE endpoints with `status_code=204` MUST include `response_model=None`
+  - Example: `@router.delete("/items/{id}", status_code=204, response_model=None)`
+  - Prevents "Status code 204 must not have a response body" error in FastAPI 0.116+
+* POST endpoints MUST use `status_code=201`
+* ALWAYS specify `response_model` on GET/POST/PATCH endpoints
+* USE dependency injection with `Depends()` for database sessions
+* USE `Query()`, `Path()`, `Body()` for parameter validation and documentation
+* NEVER use mutable defaults in `Query()` or `Body()` - use `None` with default_factory
 
 ## Performance
 

@@ -44,7 +44,7 @@ def train_network(
         np.random.seed(seed)
 
     # Load MNIST data
-    training_data, validation_data, test_data = MNISTLoader.load_data()
+    training_data, _validation_data, test_data = MNISTLoader.load_data()
 
     # Create network
     network = NeuralNetwork(sizes=sizes, activation=activation)
@@ -122,7 +122,8 @@ def load_model(filepath: Path) -> tuple[NeuralNetwork, dict[str, Any] | None]:
         ValueError: If model format is invalid
     """
     if not filepath.exists():
-        raise FileNotFoundError(f"Model file not found: {filepath}")
+        msg = f"Model file not found: {filepath}"
+        raise FileNotFoundError(msg)
 
     # Load model data
     data = np.load(filepath)

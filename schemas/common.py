@@ -8,3 +8,4 @@ class HealthCheck(BaseModel):
 
     status: str
     network_loaded: bool
+    database_connected: bool

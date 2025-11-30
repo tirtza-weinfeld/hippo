@@ -12,7 +12,13 @@ psycopg[binary]>=3.0
 pgvector
 alembic>=1.13.0
 
-# For learning/analysis (optional - only needed for Jupyter notebooks)
-jupyter==1.1.1
-matplotlib==3.10.0
-seaborn==0.13.2
+# For music generation lab (pt_part2_music_generation.py)
+torch
+torchaudio
+mitdeeplearning
+tqdm
+scipy
+opencv-python
+
+# For TensorFlow music generation lab
+tensorflow

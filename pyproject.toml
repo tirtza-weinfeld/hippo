@@ -1,0 +1,151 @@
+[project]
+name = "hippo"
+version = "0.1.0"
+description = "Neural network learning API built with FastAPI and NumPy"
+requires-python = ">=3.13"
+
+[tool.ruff]
+# Line length to match python.mdc rules
+line-length = 100
+target-version = "py313"
+
+# Exclude common directories
+exclude = [
+    ".git",
+    ".venv",
+    "__pycache__",
+    "alembic/versions",
+    "notebooks",
+]
+
+[tool.ruff.lint]
+# Enable comprehensive rule sets
+select = [
+    "E",      # pycodestyle errors
+    "W",      # pycodestyle warnings
+    "F",      # pyflakes
+    "I",      # isort
+    "N",      # pep8-naming
+    "UP",     # pyupgrade
+    "ANN",    # flake8-annotations
+    "ASYNC",  # flake8-async
+    "S",      # flake8-bandit
+    "B",      # flake8-bugbear
+    "A",      # flake8-builtins
+    "COM",    # flake8-commas
+    "C4",     # flake8-comprehensions
+    "DTZ",    # flake8-datetimez
+    "T10",    # flake8-debugger
+    "EM",     # flake8-errmsg
+    "EXE",    # flake8-executable
+    "ISC",    # flake8-implicit-str-concat
+    "ICN",    # flake8-import-conventions
+    "G",      # flake8-logging-format
+    "INP",    # flake8-no-pep420
+    "PIE",    # flake8-pie
+    "T20",    # flake8-print
+    "PYI",    # flake8-pyi
+    "PT",     # flake8-pytest-style
+    "Q",      # flake8-quotes
+    "RSE",    # flake8-raise
+    "RET",    # flake8-return
+    "SLF",    # flake8-self
+    "SLOT",   # flake8-slots
+    "SIM",    # flake8-simplify
+    "TID",    # flake8-tidy-imports
+    "TCH",    # flake8-type-checking
+    "ARG",    # flake8-unused-arguments
+    "PTH",    # flake8-use-pathlib
+    "ERA",    # eradicate
+    "PL",     # pylint
+    "TRY",    # tryceratops
+    "FLY",    # flynt
+    "PERF",   # perflint
+    "RUF",    # ruff-specific rules
+]
+
+ignore = [
+    "COM812",  # Trailing comma missing (conflicts with formatter)
+    "ISC001",  # Single line implicit string concatenation (conflicts with formatter)
+    "B008",    # Function call in argument defaults (FastAPI Depends/Query pattern)
+    "TC002",   # Move import into TYPE_CHECKING (Session needed at runtime for Annotated)
+    "TRY301",  # Raise in try (standard FastAPI error handling pattern)
+    "PLR0913", # Too many arguments (common in FastAPI endpoints with many query params)
+    "PLR0912", # Too many branches (acceptable for complex business logic)
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Test files can use assert and magic values
+"tests/**/*.py" = ["S101", "PLR2004"]
+"test_api.py" = ["S101", "PLR2004", "ANN", "T201"]  # Root test file
+# Alembic migrations are auto-generated
+"alembic/**/*.py" = ["ANN", "INP001", "ERA001", "TRY301", "EM101", "TRY003"]
+# CLI scripts can print to console
+"training/cli_*.py" = ["T201"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["api", "db", "neural_networks", "schemas", "training", "hf_hub"]
+
+[tool.ruff.format]
+# Use double quotes by default
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"
+
+[tool.basedpyright]
+# Strict type checking configuration
+pythonVersion = "3.13"
+pythonPlatform = "All"
+typeCheckingMode = "strict"
+
+# Include/exclude patterns
+include = ["api", "db", "neural_networks", "schemas", "training", "hf_hub", "tests"]
+exclude = [
+    "**/__pycache__",
+    ".venv",
+    "alembic/versions",
+    "notebooks",
+]
+
+# Strict options (aligned with --strict mypy)
+reportMissingTypeStubs = false
+reportUnknownMemberType = false
+reportUnknownArgumentType = false
+reportUnknownVariableType = false
+reportUnknownLambdaType = false
+reportImportCycles = "warning"
+reportPrivateUsage = "warning"
+
+# Enable strict checks
+strictListInference = true
+strictDictionaryInference = true
+strictSetInference = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "-v",
+    "--strict-markers",
+    "--strict-config",
+    "--cov=.",
+    "--cov-report=term-missing",
+    "--cov-report=html",
+]
+asyncio_mode = "auto"
+
+[tool.coverage.run]
+source = ["."]
+omit = [
+    "*/tests/*",
+    "*/.venv/*",
+    "*/alembic/*",
+    "*/notebooks/*",
+]
+
+[tool.coverage.report]
+precision = 2
+show_missing = true
+skip_covered = false

@@ -24,10 +24,11 @@ def get_repo_id() -> str:
     """
     repo_id = os.getenv("HF_MODEL_REPO")
     if not repo_id:
-        raise RuntimeError(
+        msg = (
             "HF_MODEL_REPO environment variable not set. "
             "Example: export HF_MODEL_REPO=username/hippo-models"
         )
+        raise RuntimeError(msg)
     return repo_id
 
 
@@ -42,10 +43,11 @@ def get_default_model() -> str:
     """
     model = os.getenv("DEFAULT_MODEL")
     if not model:
-        raise RuntimeError(
+        msg = (
             "DEFAULT_MODEL environment variable not set. "
             "Example: export DEFAULT_MODEL=mnist-relu-100"
         )
+        raise RuntimeError(msg)
     return model
 
 

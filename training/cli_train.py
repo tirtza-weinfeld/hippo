@@ -13,7 +13,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from dotenv import load_dotenv
 
-from training.train import train_network, save_model
+from training.train import save_model, train_network
 
 # Load environment variables
 load_dotenv()
@@ -238,7 +238,7 @@ def main() -> None:
                 import subprocess
 
                 try:
-                    subprocess.run(["make", "start"])
+                    subprocess.run(["make", "start"], check=False)
                 except KeyboardInterrupt:
                     print("\n\n✓ API server stopped")
             else:

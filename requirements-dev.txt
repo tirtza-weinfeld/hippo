@@ -1,0 +1,20 @@
+# Development dependencies
+-r requirements.txt
+
+# Linting + Formatting (2025 standard)
+ruff
+
+# Type checking (modern, faster alternative to mypy)
+basedpyright
+
+# Testing
+pytest>=8.0.0
+pytest-cov>=4.1.0
+pytest-asyncio>=0.23.0
+httpx>=0.26.0  # For async testing with FastAPI
+
+# Notebook and experiment tracking
+jupyter
+ipython
+comet_ml
+matplotlib

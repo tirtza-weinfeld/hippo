@@ -1,6 +1,6 @@
-"""SQLAlchemy models for vocabulary database (Oxford Languages-style).
+"""SQLAlchemy models for dictionary database (Oxford Languages-style).
 
-This module defines a normalized relational schema for storing vocabulary data:
+This module defines a normalized relational schema for storing dictionary data:
 - Words can have multiple definitions
 - Definitions can have multiple examples
 - Words can be related to other words (synonyms, antonyms)
@@ -9,19 +9,22 @@ This module defines a normalized relational schema for storing vocabulary data:
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
 
 from sqlalchemy import (
     CheckConstraint,
     DateTime,
-    Enum as SQLEnum,
     ForeignKey,
     Index,
     Integer,
     String,
     Text,
     UniqueConstraint,
+    event,
+)
+from sqlalchemy import (
+    Enum as SQLEnum,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -58,7 +61,7 @@ class RelationType(str, Enum):
 
 
 class Word(Base):
-    """Core vocabulary entry.
+    """Core dictionary entry.
 
     A word can exist without definitions (allows gradual data entry).
     Multiple definitions can be associated with one word.
@@ -74,7 +77,13 @@ class Word(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
-        default=lambda: datetime.now(timezone.utc),
+        default=lambda: datetime.now(UTC),
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
     )
 
     # Relationships
@@ -87,6 +96,11 @@ class Word(Base):
         "Tag",
         secondary="word_tags",
         back_populates="words",
+    )
+    word_forms: Mapped[list[WordForm]] = relationship(
+        "WordForm",
+        back_populates="word",
+        cascade="all, delete-orphan",
     )
 
     # Self-referential relationships for word relations
@@ -165,7 +179,9 @@ class Example(Base):
     )  # Optional source attribution
 
     # Relationships
-    definition: Mapped[Definition] = relationship("Definition", back_populates="examples")
+    definition: Mapped[Definition] = relationship(
+        "Definition", back_populates="examples"
+    )
 
     __table_args__ = (Index("idx_example_text", "example_text"),)
 
@@ -228,7 +244,9 @@ class Tag(Base):
     __tablename__ = "tags"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    name: Mapped[str] = mapped_column(String(100), unique=True, nullable=False, index=True)
+    name: Mapped[str] = mapped_column(
+        String(100), unique=True, nullable=False, index=True
+    )
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     # Relationships
@@ -265,3 +283,95 @@ class WordTag(Base):
 
     def __repr__(self) -> str:
         return f"<WordTag(word_id={self.word_id}, tag_id={self.tag_id})>"
+
+
+class WordForm(Base):
+    """Word inflections and variants (following Oxford Dictionary approach).
+
+    Stores all forms of a word (defying, defied, defies) that point to
+    the headword entry (defy). Enables search by any form to find the main entry.
+    """
+
+    __tablename__ = "word_forms"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    word_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("words.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    form_text: Mapped[str] = mapped_column(
+        String(255), nullable=False, index=True
+    )  # e.g., "defying", "defied"
+    form_type: Mapped[str | None] = mapped_column(
+        String(50), nullable=True
+    )  # e.g., "present_participle", "past_tense"
+
+    # Relationships
+    word: Mapped[Word] = relationship("Word", back_populates="word_forms")
+
+    __table_args__ = (
+        # Ensure unique (form_text, word_id) - same form can't be added twice to same word
+        UniqueConstraint("word_id", "form_text", name="uq_word_form"),
+        # Index for fast lookup by form text
+        Index("idx_form_text", "form_text"),
+    )
+
+    def __repr__(self) -> str:
+        return (
+            f"<WordForm(id={self.id}, form='{self.form_text}', word_id={self.word_id})>"
+        )
+
+
+# ============================================================================
+# Event Listeners - Auto-update Word.updated_at on nested data changes
+# ============================================================================
+
+
+def _update_word_timestamp(word_id: int, connection: object) -> None:
+    """Update Word.updated_at timestamp efficiently."""
+    # Use update() for efficiency - avoids loading the full Word object
+    from sqlalchemy import update
+
+    stmt = update(Word).where(Word.id == word_id).values(updated_at=datetime.now(UTC))
+    connection.execute(stmt)  # type: ignore[attr-defined]
+
+
+# Definition events - update parent Word timestamp
+@event.listens_for(Definition, "after_insert")
+@event.listens_for(Definition, "after_update")
+@event.listens_for(Definition, "after_delete")
+def _update_word_on_definition_change(  # pyright: ignore[reportUnusedFunction]
+    mapper: object, connection: object, target: Definition
+) -> None:  # noqa: ARG001
+    """Update parent Word timestamp when definition changes."""
+    _update_word_timestamp(target.word_id, connection)
+
+
+# Example events - update grandparent Word timestamp via Definition
+@event.listens_for(Example, "after_insert")
+@event.listens_for(Example, "after_update")
+@event.listens_for(Example, "after_delete")
+def _update_word_on_example_change(  # pyright: ignore[reportUnusedFunction]
+    mapper: object, connection: object, target: Example
+) -> None:  # noqa: ARG001
+    """Update grandparent Word timestamp when example changes."""
+    # Get the parent definition's word_id
+    from sqlalchemy import select
+
+    stmt = select(Definition.word_id).where(Definition.id == target.definition_id)
+    result = connection.execute(stmt)  # type: ignore[attr-defined]
+    row = result.fetchone()
+    if row:
+        _update_word_timestamp(row[0], connection)
+
+
+# WordTag events - update parent Word timestamp
+@event.listens_for(WordTag, "after_insert")
+@event.listens_for(WordTag, "after_delete")
+def _update_word_on_tag_change(  # pyright: ignore[reportUnusedFunction]
+    mapper: object, connection: object, target: WordTag
+) -> None:  # noqa: ARG001
+    """Update parent Word timestamp when tags change."""
+    _update_word_timestamp(target.word_id, connection)

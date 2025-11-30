@@ -1,21 +1,25 @@
 """Database configuration and session management.
 
-This module provides the base SQLAlchemy setup for the vocabulary database.
+This module provides the base SQLAlchemy setup for the dictionary database.
 Uses SQLAlchemy 2.0 with async support and Neon PostgreSQL.
 """
 
 from __future__ import annotations
 
 import os
-from collections.abc import Generator
+from typing import TYPE_CHECKING
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
+if TYPE_CHECKING:
+    from collections.abc import Generator
+
 # Get DATABASE_URL from environment
 DATABASE_URL = os.getenv("DATABASE_URL")
 if DATABASE_URL is None:
-    raise ValueError("DATABASE_URL environment variable must be set")
+    msg = "DATABASE_URL environment variable must be set"
+    raise ValueError(msg)
 
 # Create engine with connection pooling
 # pool_pre_ping ensures connections are alive before using them
@@ -37,10 +41,8 @@ SessionLocal = sessionmaker(
 class Base(DeclarativeBase):
     """Base class for all SQLAlchemy models."""
 
-    pass
 
-
-def get_db() -> Generator[Session, None, None]:
+def get_db() -> Generator[Session]:
     """Dependency for FastAPI routes to get a database session.
 
     Yields:
