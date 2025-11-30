@@ -1,0 +1,25 @@
+# Large files not needed in production
+notebooks/
+data/
+models/
+
+# Development files
+.venv/
+.git/
+.coverage
+*.pyc
+__pycache__/
+
+# Documentation
+docs/
+*.md
+!requirements*.md
+
+# Tests
+tests/
+test_*.py
+conftest.py
+
+# Local config
+.env
+.cursor/
